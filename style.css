@@ -570,3 +570,13 @@ body:not([data-view=inicio]) .ab-btn.wa svg{color:#fff}
 .act .aimg{width:58px;height:auto;border-radius:14px;margin-bottom:4px}
 .himg{width:54px;height:auto;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.15)}
 @media (min-width:1000px){ .tbi{width:24px} }
+
+/* Portada con imagen propia (logo y frase incluidos) */
+.tagline.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hero-shade{background:linear-gradient(180deg,rgba(0,40,70,.28) 0%,rgba(0,0,0,0) 14%)}
+@media (min-width:1000px){ .hero-img{height:82vh;max-height:82vh;object-position:50% 28%} }
+@media (min-width:1000px){
+  .hero2{padding-top:68px;background:linear-gradient(90deg,#ff1493,#ff3fa6)}
+  .hero-img{height:calc(86vh - 68px);max-height:calc(86vh - 68px);object-position:50% 0}
+  .hero-shade{display:none}
+}
