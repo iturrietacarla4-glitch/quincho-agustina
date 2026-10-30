@@ -10,52 +10,84 @@
 <link rel="icon" href="assets/logo-redondo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Pacifico&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
-
-<header class="top" id="top">
-  <a class="brand" href="#inicio" aria-label="El Quincho de Agustina, inicio">
-    <img src="assets/logo.webp" alt="El Quincho de Agustina" width="900" height="569">
-  </a>
-  <nav id="nav" class="nav" aria-label="Principal">
-    <a href="#instalaciones">Instalaciones</a>
-    <a href="#galeria">Galería</a>
-    <a href="#eventos">Eventos</a>
-    <a href="#reservas">Disponibilidad</a>
-    <a href="#visitantes">Visitantes</a>
-    <a href="#contacto">Contacto</a>
-  </nav>
-  <a class="btn pink sm hide-m" href="#reservas">Reserva aquí</a>
-  <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><g fill="currentColor"><rect x="6.5" y="12" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="12" width="2.6" height="2.4" rx=".6"/><rect x="14.9" y="12" width="2.6" height="2.4" rx=".6"/><rect x="6.5" y="16" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="16" width="2.6" height="2.4" rx=".6"/></g></symbol>
+    <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9.5" r="1.8" fill="currentColor"/><path d="M4 18l5.5-5.5 3.5 3.5 2.5-2.5L20 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" fill="currentColor"/><circle cx="5.6" cy="9.6" r="2.5" fill="currentColor"/><circle cx="18.4" cy="9.6" r="2.5" fill="currentColor"/><path d="M6.2 19.5c0-3.4 2.6-6 5.8-6s5.8 2.6 5.8 6z" fill="currentColor"/><path d="M1.2 18.5c0-2.6 1.9-4.6 4.4-4.6.8 0 1.5.2 2.1.5-1 1.2-1.6 2.6-1.7 4.1zM22.8 18.5c0-2.6-1.9-4.6-4.4-4.6-.8 0-1.5.2-2.1.5 1 1.2 1.6 2.6 1.7 4.1z" fill="currentColor"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.6 7-12.2A7 7 0 0 0 5 9.8C5 15.4 12 22 12 22z" fill="currentColor"/><circle cx="12" cy="9.8" r="2.8" fill="#fff"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.2 12 3.5l9 7.7V20a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H4.5A1.5 1.5 0 0 1 3 20z" fill="currentColor"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.6 2.8 9 2.3l2 4.6-2.2 1.6a12 12 0 0 0 6.7 6.7l1.6-2.2 4.6 2-.5 2.4A3 3 0 0 1 18.3 20 16.3 16.3 0 0 1 4 5.7a3 3 0 0 1 2.6-2.9z" fill="currentColor"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="currentColor"/><path d="M8.6 8.4c.3-.6.6-.6.9-.6h.6c.2 0 .4 0 .6.5l.8 1.8c.1.3 0 .5-.1.7l-.5.6c-.1.2-.2.3 0 .6.7 1.2 1.7 2.1 2.9 2.7.3.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .6-.3 1.5-1.1 1.8-.8.4-1.8.5-3.6-.3a10 10 0 0 1-4.3-4c-.7-1.2-.9-2.4-.2-3.6z" fill="#fff"/></symbol>
+    <symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 8c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 18c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5l3.6 2.6-1.4 4.2H9.8L8.4 10.1z" fill="currentColor"/><path d="M12 7.5V3.2M15.6 10.1l4-1.4M14.2 14.3l2.6 3.6M9.8 14.3l-2.6 3.6M8.4 10.1l-4-1.4" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-roof" viewBox="0 0 24 24"><path d="M1.5 11.5 12 4l10.5 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10.5V20h14v-9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 20v-5h5v5" fill="currentColor"/></symbol>
+    <symbol id="i-umb" viewBox="0 0 24 24"><path d="M2.5 11a9.5 8 0 0 1 19 0z" fill="currentColor"/><path d="M12 11v8.2a1.8 1.8 0 0 1-3.6 0M12 3v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-plate" viewBox="0 0 24 24"><circle cx="13" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="13" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 3v6.5M3 9.5V21M1.4 3v4.5a1.6 1.6 0 0 0 3.2 0V3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-balloon" viewBox="0 0 24 24"><path d="M12 2.5c3.6 0 6.3 2.8 6.3 6.5 0 4-3.3 7.6-6.3 7.6S5.7 13 5.7 9C5.7 5.3 8.4 2.5 12 2.5z" fill="currentColor"/><path d="M12 16.6l-1 1.6h2zM12 18.2c0 1.6-1.6 1.8-1.6 3.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-jump" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.2" fill="currentColor"/><path d="M12 7.5v5.5M8 8.5l4 2 4-2M9.5 17l2.5-4 2.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="12" cy="20" rx="9" ry="2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6.5h12.5v10H2zM14.5 9.5h4l3 3.5v3.5h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2" fill="currentColor"/><path d="M5 9.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+<header class="appbar" id="appbar">
+  <button class="ab-btn" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav"><svg><use href="#i-menu"/></svg></button>
+  <a class="ab-logo" href="#inicio" aria-label="Inicio"><img src="assets/logo.webp" alt="El Quincho de Agustina" width="900" height="569"></a>
+  <a class="ab-btn wa" id="abWa" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-chat"/></svg></a>
 </header>
-
+<div class="scrim" id="scrim" hidden></div>
+<nav class="drawer" id="nav" aria-label="Menú">
+  <img src="assets/logo.webp" alt="" width="900" height="569" class="dr-logo">
+  <a href="#inicio"><svg><use href="#i-home"/></svg>Inicio</a>
+  <a href="#instalaciones"><svg><use href="#i-img"/></svg>Instalaciones y galería</a>
+  <a href="#eventos"><svg><use href="#i-users"/></svg>Eventos</a>
+  <a href="#reservas"><svg><use href="#i-cal"/></svg>Reservas</a>
+  <a href="#contacto"><svg><use href="#i-phone"/></svg>Contacto y ubicación</a>
+  <a href="#visitantes"><span class="dr-ico">💛</span>Nuestros visitantes</a>
+</nav>
 <main id="main">
-  <!-- PORTADA -->
-  <section id="inicio" class="hero">
-    <div class="hero-copy reveal">
-      <span class="tag">☀ El Manzano · Las Dichas · Casablanca</span>
-      <h1>Tu día de verano <span class="hl">perfecto</span> está aquí.</h1>
-      <p>Piscina, cancha, quincho y áreas de sombra para disfrutar en familia y celebrar lo que quieras, a un paso de Casablanca.</p>
-      <div class="actions">
-        <a class="btn pink" href="#reservas">📅 Consultar disponibilidad</a>
-        <a class="btn outline" href="#eventos">Organiza tu evento</a>
+  <!-- ============ INICIO ============ -->
+  <div class="view" id="inicio" data-view="inicio">
+    <section class="hero2">
+      <img class="hero-img" src="assets/aerea.jpg" alt="Vista aérea de El Quincho de Agustina con piscina, quincho de techo rojo, toldos y cancha" width="1086" height="1448" fetchpriority="high">
+      <div class="hero-shade" aria-hidden="true"></div>
+      <h1 class="tagline"><span class="t1" id="lema1"></span><span class="t2" id="lema2"></span></h1>
+      <span class="flower f1" aria-hidden="true">🌺</span><span class="flower f2" aria-hidden="true">🌼</span>
+      <div class="tiles">
+        <a class="tile t-pink" href="#reservas"><svg class="ti"><use href="#i-cal"/></svg><b>Reservas</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-yellow" href="#instalaciones"><svg class="ti"><use href="#i-img"/></svg><b>Instalaciones</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-cyan" href="#eventos"><svg class="ti"><use href="#i-users"/></svg><b>Eventos</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-green" href="#" id="tileMaps" target="_blank" rel="noopener"><svg class="ti"><use href="#i-pin"/></svg><b>Cómo llegar</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
       </div>
-      <ul class="chips" aria-label="Lo que encontrarás">
-        <li>🏊 Piscina</li><li>⚽ Cancha</li><li>🍖 Quincho</li><li>⛱️ Sombra</li>
-      </ul>
+    </section>
+    <div class="home-body">
+      <section class="promo" aria-roledescription="carrusel" aria-label="Celebraciones">
+        <div class="promo-track" id="promoTrack"></div>
+        <button class="promo-next" id="promoNext" aria-label="Siguiente"><svg><use href="#i-chev"/></svg></button>
+        <div class="dots" id="promoDots"></div>
+      </section>
+      <h2 class="h-home">Disfruta de nuestras instalaciones</h2>
+      <div class="strip" id="homeStrip"></div>
+      <h2 class="h-home">Consulta tu fecha</h2>
+      <div class="card homecal">
+        <div class="cal-head"><button type="button" id="hprev" class="icon-btn" aria-label="Mes anterior">‹</button><strong id="hmonth" aria-live="polite"></strong><button type="button" id="hnext" class="icon-btn" aria-label="Mes siguiente">›</button></div>
+        <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+        <div class="calendar" id="hcal" role="grid" aria-label="Disponibilidad"></div>
+        <div class="legend"><span><i class="dot ok"></i>Disponible</span><span><i class="dot bk"></i>Reservado</span></div>
+        <p class="tiny">Toca un día disponible para solicitar tu reserva.</p>
+      </div>
     </div>
-    <figure class="hero-media reveal">
-      <img src="assets/aerea.jpg" alt="Vista aérea de El Quincho de Agustina con piscina, quincho de techo rojo, toldos y cancha sintética" width="1086" height="1448" fetchpriority="high">
-      <figcaption>Vista aérea del recinto (imagen editada)</figcaption>
-    </figure>
-    <div class="wave" aria-hidden="true"></div>
-  </section>
-
-  <!-- INSTALACIONES -->
-  <section id="instalaciones" class="section">
+  </div>
+  <!-- ============ INSTALACIONES ============ -->
+  <div class="view" id="instalaciones" data-view="instalaciones" hidden>
+    <div class="view-head"><h1>Instalaciones</h1></div>
+  <section class="section">
     <div class="head reveal">
       <span class="tag teal">Instalaciones</span>
       <h2>Todo para un <span class="hl">gran día</span></h2>
@@ -63,8 +95,6 @@
     </div>
     <div id="facilities" class="facilities"></div>
   </section>
-
-  <!-- GALERÍA -->
   <section id="galeria" class="section sky">
     <div class="head reveal">
       <span class="tag pinkt">Galería</span>
@@ -74,9 +104,11 @@
     <div class="filters" id="gFilters" role="group" aria-label="Filtrar galería"></div>
     <div id="gallery" class="gallery"></div>
   </section>
-
-  <!-- EVENTOS -->
-  <section id="eventos" class="section events">
+  </div>
+  <!-- ============ EVENTOS ============ -->
+  <div class="view" id="eventos" data-view="eventos" hidden>
+    <div class="view-head"><h1>Eventos</h1></div>
+  <section class="section events">
     <div class="head reveal">
       <span class="tag yellow">Celebraciones</span>
       <h2>Eventos que se <span class="hl">recuerdan</span></h2>
@@ -109,9 +141,11 @@
       </form>
     </div>
   </section>
-
-  <!-- DISPONIBILIDAD -->
-  <section id="reservas" class="section sand">
+  </div>
+  <!-- ============ RESERVAS ============ -->
+  <div class="view" id="reservas" data-view="reservas" hidden>
+    <div class="view-head"><h1>Reservas</h1></div>
+  <section class="section sand">
     <div class="head reveal">
       <span class="tag teal">Disponibilidad</span>
       <h2>Consulta tu <span class="hl">fecha</span></h2>
@@ -151,26 +185,11 @@
       </form>
     </div>
   </section>
-
-  <!-- VISITANTES -->
-  <section id="visitantes" class="section">
-    <div class="head reveal">
-      <span class="tag pinkt">Nuestros visitantes</span>
-      <h2>Historias que <span class="hl">quedan</span> ♥</h2>
-      <p>Un mural de recuerdos. Cada mensaje se revisa antes de publicarse.</p>
-    </div>
-    <div id="wall" class="wall"></div>
-    <form id="wallForm" class="card form narrow">
-      <h3>Deja tu recuerdo 💌</h3>
-      <label>Nombre de familia o grupo<input id="wname" required maxlength="80"></label>
-      <label>Tu experiencia<textarea id="wmessage" required rows="3" maxlength="600"></textarea></label>
-      <label class="check"><input type="checkbox" id="wconsent" required> Autorizo la publicación de mi comentario. Las fotografías requieren autorización adicional.</label>
-      <button class="btn teal" type="submit">Enviar para revisión</button>
-    </form>
-  </section>
-
-  <!-- CONTACTO Y UBICACIÓN -->
-  <section id="contacto" class="section contact">
+  </div>
+  <!-- ============ CONTACTO ============ -->
+  <div class="view" id="contacto" data-view="contacto" hidden>
+    <div class="view-head"><h1>Contacto</h1></div>
+  <section class="section contact">
     <div class="head reveal center">
       <span class="tag yellow">Contacto y ubicación</span>
       <h2>Hablemos de tu <span class="hl">próximo día</span></h2>
@@ -190,9 +209,24 @@
       </div>
     </div>
   </section>
-
-  <!-- ADMIN DEMO -->
-  <section id="admin" class="section admin" hidden>
+  <section id="visitantes" class="section">
+    <div class="head reveal">
+      <span class="tag pinkt">Nuestros visitantes</span>
+      <h2>Historias que <span class="hl">quedan</span> ♥</h2>
+      <p>Un mural de recuerdos. Cada mensaje se revisa antes de publicarse.</p>
+    </div>
+    <div id="wall" class="wall"></div>
+    <form id="wallForm" class="card form narrow">
+      <h3>Deja tu recuerdo 💌</h3>
+      <label>Nombre de familia o grupo<input id="wname" required maxlength="80"></label>
+      <label>Tu experiencia<textarea id="wmessage" required rows="3" maxlength="600"></textarea></label>
+      <label class="check"><input type="checkbox" id="wconsent" required> Autorizo la publicación de mi comentario. Las fotografías requieren autorización adicional.</label>
+      <button class="btn teal" type="submit">Enviar para revisión</button>
+    </form>
+  </section>
+  </div>
+  <div class="view" data-view="admin" hidden>
+  <section id="admin" class="section admin">
     <div class="admin-login card" id="adminLogin">
       <h3>🔒 Acceso administración</h3>
       <p class="muted">Solo para Carla y Matías.</p>
@@ -217,8 +251,8 @@
       <div id="adminContent" class="card"></div>
     </details>
   </section>
+  </div>
 </main>
-
 <footer>
   <img src="assets/logo-redondo.png" alt="" width="64" height="64" loading="lazy" class="round">
   <span>El Manzano · Las Dichas · Casablanca</span>
@@ -228,8 +262,13 @@
   <span>Desarrollado por</span>
   <img src="assets/fluva.png" alt="FLUVA · Tecnología que fluye contigo" width="620" height="235" loading="lazy">
 </div>
-
-<a class="floating" href="#reservas">📅 Reserva aquí</a>
+<nav class="tabbar" id="tabbar" aria-label="Secciones">
+  <a href="#inicio" data-tab-link="inicio"><svg><use href="#i-home"/></svg><span>Inicio</span></a>
+  <a href="#instalaciones" data-tab-link="instalaciones"><svg><use href="#i-img"/></svg><span>Instalaciones</span></a>
+  <a href="#eventos" data-tab-link="eventos"><svg><use href="#i-users"/></svg><span>Eventos</span></a>
+  <a href="#reservas" data-tab-link="reservas"><svg><use href="#i-cal"/></svg><span>Reservas</span></a>
+  <a href="#contacto" data-tab-link="contacto"><svg><use href="#i-phone"/></svg><span>Contacto</span></a>
+</nav>
 
 <!-- Visor de galería -->
 <dialog id="viewer" class="viewer" aria-label="Visor de fotos">

@@ -58,16 +58,16 @@ function sendWhatsApp(title, msg){
     actions:[ {label:'Copiar mensaje', onClick:()=>copy(msg), close:false}, {label:'Abrir WhatsApp ↗', cls:'green', href:waLink(msg)} ] });
 }
 
-/* ---------- Navegación móvil ---------- */
-const burger = $('burger'), nav = $('nav');
-burger.addEventListener('click', () => { const o = nav.classList.toggle('open'); burger.setAttribute('aria-expanded', o); burger.setAttribute('aria-label', o ? 'Cerrar menú' : 'Abrir menú'); });
-nav.addEventListener('click', e => { if (e.target.closest('a')) { nav.classList.remove('open'); burger.setAttribute('aria-expanded', false); } });
+/* ---------- Menú lateral ---------- */
+const burger = $('burger'), nav = $('nav'), scrim = $('scrim');
+const drawer = open => { nav.classList.toggle('open', open); scrim.hidden = !open; burger.setAttribute('aria-expanded', open); burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú'); };
+burger.addEventListener('click', () => drawer(!nav.classList.contains('open')));
+scrim.addEventListener('click', () => drawer(false));
+nav.addEventListener('click', e => { if (e.target.closest('a')) drawer(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') drawer(false); });
 
-/* Sección activa en el menú + animaciones de entrada */
+/* Animaciones de entrada */
 if ('IntersectionObserver' in window) {
-  const links = [...nav.querySelectorAll('a')];
-  const spy = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); }), {rootMargin:'-45% 0px -50% 0px'});
-  document.querySelectorAll('main > section[id]').forEach(s => spy.observe(s));
   const rv = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), {threshold:.12});
   window.__reveal = el => rv.observe(el);
 } else window.__reveal = el => el.classList.add('in');
@@ -81,13 +81,14 @@ function facilities(){
       <img src="${esc(f.foto)}" alt="${esc(f.titulo)}" loading="lazy" width="600" height="895">
       <div class="body"><h3>${esc(f.titulo)}</h3><p>${esc(f.texto)}</p><span class="more">Ver ficha →</span></div>
     </button>`).join('');
-  $('facilities').querySelectorAll('[data-fac]').forEach(b => b.addEventListener('click', () => {
-    const f = D.instalaciones[b.dataset.fac];
-    $('fImg').src = f.foto; $('fImg').alt = f.titulo;
-    $('fTitle').textContent = `${f.icono} ${f.titulo}`; $('fText').textContent = f.texto;
-    $('fList').innerHTML = Object.entries(f.detalles).filter(([,v]) => v).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
-    openDlg($('facility'));
-  }));
+  $('facilities').querySelectorAll('[data-fac]').forEach(b => b.addEventListener('click', () => openFacility(+b.dataset.fac)));
+}
+function openFacility(i){
+  const f = D.instalaciones[i];
+  $('fImg').src = f.foto; $('fImg').alt = f.titulo;
+  $('fTitle').textContent = `${f.icono} ${f.titulo}`; $('fText').textContent = f.texto;
+  $('fList').innerHTML = Object.entries(f.detalles).filter(([,v]) => v).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  openDlg($('facility'));
 }
 
 /* ---------- Galería + visor ---------- */
@@ -155,14 +156,15 @@ function calendar(){
     b.className = ({exclusive:'available',individual:'special',booked:'booked'}[s] || '') + (key===selected?' selected':'') + (+d===+today?' today':'');
     b.disabled = past || s==='closed' || s==='booked';
     b.setAttribute('aria-label', `${fmtDate(key)}: ${past ? 'fecha pasada' : LABEL[s]}`);
-    b.addEventListener('click', () => {
-      selected = key; $('chosenDate').innerHTML = `📅 <b>${esc(fmtDate(key))}</b>`;
-      $('bookingMode').value = s==='individual' ? D.modalidades.individual.nombre : D.modalidades.exclusive.nombre;
-      calendar();
-    });
+    b.addEventListener('click', () => pickDate(key));
     el.append(b);
   }
   $('prev').disabled = shown <= new Date(today.getFullYear(), today.getMonth(), 1);
+}
+function pickDate(key){
+  const s = status(key); selected = key; $('chosenDate').innerHTML = `📅 <b>${esc(fmtDate(key))}</b>`;
+  $('bookingMode').value = s==='individual' ? D.modalidades.individual.nombre : D.modalidades.exclusive.nombre;
+  calendar();
 }
 $('prev').addEventListener('click', () => { shown.setMonth(shown.getMonth()-1); calendar(); });
 $('next').addEventListener('click', () => { shown.setMonth(shown.getMonth()+1); calendar(); });
@@ -541,16 +543,24 @@ async function drawReceipt(r){
 const ADM_SALT = 'quincho-agustina|', SKEY = 'quincho-admin';
 async function sha(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
 const who = () => { try { return sessionStorage.getItem(SKEY) || ''; } catch { return ''; } };
-function adminRoute(){
-  const on = location.hash === '#admin';
-  $('admin').hidden = !on;
-  document.querySelectorAll('main > section:not(#admin), .floating').forEach(s => s.hidden = on);
-  if (!on) return;
-  const u = who();
-  $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u;
-  if (u) { $('adminWho').textContent = u; renderAdmin(); }
-  window.scrollTo(0,0);
+/* ---------- Pestañas (rutas por #hash) ---------- */
+const VIEWS = ['inicio','instalaciones','eventos','reservas','contacto','admin'];
+const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], main:['inicio'] };
+let curView = '';
+function route(){
+  const h = location.hash.slice(1);
+  let [v, anchor] = ALIAS[h] || [VIEWS.includes(h) ? h : 'inicio'];
+  document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
+  document.body.dataset.view = v;
+  document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
+  if (v === 'admin'){ const u = who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); } }
+  if (v === 'inicio') homeCal();
+  revealAll();
+  if (anchor) requestAnimationFrame(() => $(anchor).scrollIntoView({block:'start'}));
+  else if (v !== curView) window.scrollTo(0,0);
+  curView = v;
 }
+const adminRoute = route;
 let tries = 0;
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -561,8 +571,51 @@ $('loginForm').addEventListener('submit', async e => {
   $('lPin').value = ''; $('lMsg').textContent = ''; adminRoute();
 });
 $('logout').addEventListener('click', e => { e.preventDefault(); try { sessionStorage.removeItem(SKEY); } catch {} adminRoute(); });
-window.addEventListener('hashchange', adminRoute);
+window.addEventListener('hashchange', route);
+
+/* ---------- Pantalla de inicio ---------- */
+function home(){
+  const [l1, l2] = D.negocio.lema || ['Un día de diversión','en la naturaleza'];
+  $('lema1').textContent = l1; $('lema2').textContent = l2;
+  $('tileMaps').href = D.negocio.mapsUrl; $('abWa').href = waLink(`Hola Carla, tengo una consulta sobre ${D.negocio.nombre}.`);
+  // carrusel
+  const S = D.promos || [];
+  $('promoTrack').innerHTML = S.map((p,i) => `<a class="slide" href="${esc(p.link)}" style="background-image:linear-gradient(90deg,rgba(20,10,30,.78),rgba(20,10,30,.15) 70%),url('${esc(p.foto)}')" aria-label="${esc(p.t1+' '+p.t2)}">
+      <span class="s1">${esc(p.t1)}</span><span class="s2">${esc(p.t2)}</span><span class="smore">Ver más <svg><use href="#i-chev"/></svg></span></a>`).join('');
+  $('promoDots').innerHTML = S.map((_,i) => `<button type="button" aria-label="Ir a la diapositiva ${i+1}" data-dot="${i}"></button>`).join('');
+  const tr = $('promoTrack'); let idx = 0, timer;
+  const go = i => { idx = (i + S.length) % S.length; tr.scrollTo({left: idx * tr.clientWidth, behavior:'smooth'}); };
+  const mark = () => { idx = Math.round(tr.scrollLeft / Math.max(1,tr.clientWidth)); $('promoDots').querySelectorAll('button').forEach((b,i) => b.classList.toggle('on', i === idx)); };
+  tr.addEventListener('scroll', () => { clearTimeout(tr._t); tr._t = setTimeout(mark, 80); }, {passive:true});
+  $('promoDots').addEventListener('click', e => { const b = e.target.closest('[data-dot]'); if (b) { go(+b.dataset.dot); restart(); } });
+  $('promoNext').addEventListener('click', () => { go(idx + 1); restart(); });
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const restart = () => { clearInterval(timer); if (!reduce && S.length > 1) timer = setInterval(() => { if (curView === 'inicio' && !document.hidden) go(idx + 1); }, 5000); };
+  mark(); restart();
+  // tira de instalaciones
+  $('homeStrip').innerHTML = D.instalaciones.map((f,i) => `<button type="button" class="scard" data-hfac="${i}"><img src="${esc(f.foto)}" alt="" loading="lazy"><span class="spill"><svg><use href="#${esc(f.svg || 'i-img')}"/></svg>${esc(f.corto || f.titulo)}</span></button>`).join('');
+  $('homeStrip').querySelectorAll('[data-hfac]').forEach(b => b.addEventListener('click', () => openFacility(+b.dataset.hfac)));
+  $('hprev').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()-1); homeCal(); });
+  $('hnext').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()+1); homeCal(); });
+}
+let hShown = new Date(today.getFullYear(), today.getMonth(), 1);
+function homeCal(){
+  const g = $('hcal'); g.innerHTML = '';
+  { const m = hShown.toLocaleDateString('es-CL',{month:'long',year:'numeric'}); $('hmonth').textContent = m.charAt(0).toUpperCase() + m.slice(1); }
+  const start = (hShown.getDay()+6)%7; for (let i=0;i<start;i++) g.append(document.createElement('span'));
+  const days = new Date(hShown.getFullYear(), hShown.getMonth()+1, 0).getDate();
+  for (let n=1;n<=days;n++){
+    const d = new Date(hShown.getFullYear(), hShown.getMonth(), n), key = iso(d), s = status(key), past = d < today;
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = n;
+    b.className = ({exclusive:'available',individual:'special',booked:'booked'}[s] || '') + (+d === +today ? ' today' : '');
+    b.disabled = past || s === 'closed' || s === 'booked';
+    b.setAttribute('aria-label', `${fmtDate(key)}: ${past ? 'fecha pasada' : LABEL[s]}`);
+    b.addEventListener('click', () => { shown = new Date(d.getFullYear(), d.getMonth(), 1); pickDate(key); location.hash = 'reservas'; });
+    g.append(b);
+  }
+  $('hprev').disabled = hShown <= new Date(today.getFullYear(), today.getMonth(), 1);
+}
 
 /* ---------- Inicio ---------- */
-facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); revealAll(); adminRoute();
+facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); home(); route();
 })();

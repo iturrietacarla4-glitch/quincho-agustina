@@ -7,6 +7,7 @@
 window.QUINCHO_DATA = {
   negocio: {
     nombre: 'El Quincho de Agustina',
+    lema: ['Un día de diversión', 'en la naturaleza'],
     ubicacion: 'El Manzano, Las Dichas, Casablanca',
     direccionExacta: 'El Manzano, Las Dichas, Casablanca',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=El+Manzano+Las+Dichas+Casablanca+Chile', // reemplazar por el pin exacto
@@ -28,30 +29,38 @@ window.QUINCHO_DATA = {
   },
 
   instalaciones: [
-    { id: 'piscina', icono: '🏊', titulo: 'Piscina', foto: 'assets/piscina.jpg',
+    { id: 'piscina', svg: 'i-waves', corto: 'Piscina', icono: '🏊', titulo: 'Piscina', foto: 'assets/piscina.jpg',
       texto: 'Piscina al aire libre con zona de poca profundidad, reposeras y quitasoles.',
       detalles: { 'Medidas / profundidad': null, 'Salvavidas': 'No' } },
-    { id: 'cancha', icono: '⚽', titulo: 'Cancha y zona picnic', foto: 'assets/picnic-cancha.jpg',
+    { id: 'cancha', svg: 'i-ball', corto: 'Cancha', icono: '⚽', titulo: 'Cancha y zona picnic', foto: 'assets/picnic-cancha.jpg',
       texto: 'Cancha de pasto sintético con arcos y mesas de picnic de madera junto a ella.',
       detalles: { 'Tipo de cancha': 'Baby fútbol, pasto sintético', 'Incluida en el arriendo': 'Sí' } },
-    { id: 'quincho', icono: '🍖', titulo: 'Quincho y parrillas', foto: 'assets/parrilla.jpg',
+    { id: 'quincho', svg: 'i-roof', corto: 'Quincho techado', icono: '🍖', titulo: 'Quincho y parrillas', foto: 'assets/parrilla.jpg',
       texto: 'Parrilla grande y quincho techado para el asado de toda la familia.',
       detalles: { 'Parrillas': 'Equipadas, incluidas en el arriendo', 'Refrigeradores': 'Incluidos', 'Carbón o leña': 'Se pueden usar ambos' } },
-    { id: 'salon', icono: '🍽️', titulo: 'Salón y terraza', foto: 'assets/salon-montaje.jpg',
+    { id: 'salon', svg: 'i-plate', corto: 'Salón y terraza', icono: '🍽️', titulo: 'Salón y terraza', foto: 'assets/salon-montaje.jpg',
       texto: 'Salón revestido en madera y terraza techada, con montaje de mesas para almuerzos y eventos.',
       detalles: { 'Capacidad para eventos': 'Hasta 80 personas', 'Loza': 'Incluida en el arriendo', 'Mantelería': 'A solicitud del evento' } },
-    { id: 'juegos', icono: '🎈', titulo: 'Juegos inflables', foto: 'assets/inflable-tobogan.jpg',
+    { id: 'juegos', svg: 'i-balloon', corto: 'Inflables', icono: '🎈', titulo: 'Juegos inflables', foto: 'assets/inflable-tobogan.jpg',
       texto: 'Gran tobogán inflable de colores para que los niños disfruten todo el día.',
       detalles: { 'Incluido en el arriendo': 'No, se cotiza aparte' } },
-    { id: 'cama', icono: '🤸', titulo: 'Cama elástica y columpios', foto: 'assets/cama-elastica.jpg',
+    { id: 'cama', svg: 'i-jump', corto: 'Cama elástica', icono: '🤸', titulo: 'Cama elástica y columpios', foto: 'assets/cama-elastica.jpg',
       texto: 'Cama elástica con malla de protección y columpios, bajo toldos de sombra.',
       detalles: {} },
-    { id: 'sombra', icono: '⛱️', titulo: 'Áreas de sombra', foto: 'assets/juegos-piscina.jpg',
+    { id: 'sombra', svg: 'i-umb', corto: 'Zonas de descanso', icono: '⛱️', titulo: 'Áreas de sombra', foto: 'assets/juegos-piscina.jpg',
       texto: 'Toldos tensados y quitasoles alrededor de la piscina para descansar del sol.',
       detalles: { 'Mesas disponibles': 'Sí', 'Reposeras': 'Sí' } },
-    { id: 'foodtruck', icono: '🌮', titulo: 'Food truck', foto: 'assets/foodtruck.jpg',
+    { id: 'foodtruck', svg: 'i-truck', corto: 'Food truck', icono: '🌮', titulo: 'Food truck', foto: 'assets/foodtruck.jpg',
       texto: 'Carro de comida en el recinto para picar algo rico sin salir del quincho.',
       detalles: { 'Menú': 'A solicitud del evento', 'Días de atención': 'Cuando se solicite para el evento' } }
+  ],
+
+  /* Carrusel de la pantalla de inicio */
+  promos: [
+    { t1: 'Celebraciones', t2: 'inolvidables', foto: 'assets/evento-noche.jpg', link: '#eventos' },
+    { t1: 'Matrimonios', t2: 'al aire libre', foto: 'assets/matrimonio-entrada.jpg', link: '#eventos' },
+    { t1: 'Cumpleaños', t2: 'llenos de alegría', foto: 'assets/cumple-almuerzo.jpg', link: '#eventos' },
+    { t1: 'Tu día de piscina', t2: 'en familia', foto: 'assets/piscina.jpg', link: '#reservas' }
   ],
 
   /* cat: recinto | familia | eventos  (se usa para los filtros de la galería) */
