@@ -38,6 +38,8 @@
 </svg>
 <header class="appbar" id="appbar">
   <button class="ab-btn" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav"><svg><use href="#i-menu"/></svg></button>
+  <a class="ab-btn ab-back" href="#inicio" aria-label="Volver al inicio"><svg class="flip"><use href="#i-chev"/></svg></a>
+  <span class="ab-title" id="abTitle"></span>
   <a class="ab-logo" href="#inicio" aria-label="Inicio"><img src="assets/logo.webp" alt="El Quincho de Agustina" width="900" height="569"></a>
   <a class="ab-btn wa" id="abWa" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-chat"/></svg></a>
 </header>
@@ -145,46 +147,74 @@
   <!-- ============ RESERVAS ============ -->
   <div class="view" id="reservas" data-view="reservas" hidden>
     <div class="view-head"><h1>Reservas</h1></div>
-  <section class="section sand">
-    <div class="head reveal">
-      <span class="tag teal">Disponibilidad</span>
-      <h2>Consulta tu <span class="hl">fecha</span></h2>
-      <p>Elige un día habilitado y envía tu solicitud. El arriendo exclusivo es la modalidad principal; las entradas individuales se abren en fechas especiales.</p>
+    <div class="rz-banner">
+      <img src="assets/aerea.jpg" alt="" width="1086" height="1448">
+      <p class="rz-tag"><span>Tu momento</span><span>en la naturaleza</span> <b aria-hidden="true">♥</b></p>
     </div>
-    <div class="two">
-      <div class="card">
-        <div class="cal-head">
-          <button id="prev" class="icon-btn" aria-label="Mes anterior">‹</button>
-          <strong id="month" aria-live="polite"></strong>
-          <button id="next" class="icon-btn" aria-label="Mes siguiente">›</button>
+    <div class="rz">
+      <ol class="stepper" id="stepper" aria-label="Pasos de la reserva">
+        <li data-step="1"><i>1</i><span><b>Fecha</b><small>Selecciona día</small></span></li>
+        <li data-step="2"><i>2</i><span><b>Actividad</b><small>Tipo de evento</small></span></li>
+        <li data-step="3"><i>3</i><span><b>Personas</b><small>Cantidad</small></span></li>
+        <li data-step="4"><i>4</i><span><b>Resumen</b><small>Confirma</small></span></li>
+      </ol>
+
+      <form id="bookingForm" novalidate>
+        <div id="rzStepA">
+          <section class="rz-card">
+            <div class="rz-calhead">
+              <h2><svg><use href="#i-cal"/></svg>Selecciona una fecha</h2>
+              <div class="rz-month"><button type="button" id="prev" aria-label="Mes anterior"><svg class="flip"><use href="#i-chev"/></svg></button><strong id="month" aria-live="polite"></strong><button type="button" id="next" aria-label="Mes siguiente"><svg><use href="#i-chev"/></svg></button></div>
+            </div>
+            <div class="rz-calgrid">
+              <div>
+                <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+                <div id="calendar" class="calendar rz-cal" role="grid" aria-label="Calendario de disponibilidad"></div>
+              </div>
+              <aside class="rz-side">
+                <ul class="rz-legend"><li><i class="lg ok"></i>Disponible</li><li><i class="lg sel"></i>Seleccionado</li><li><i class="lg no"></i>No disponible</li></ul>
+                <p class="rz-note"><svg><use href="#i-cal"/></svg>Las reservas están sujetas a confirmación por el equipo de El Quincho de Agustina.</p>
+              </aside>
+            </div>
+            <p class="rz-chosen" id="chosenDate" aria-live="polite"></p>
+          </section>
+
+          <section class="rz-sec">
+            <div class="rz-sechead"><h2><span class="ico" aria-hidden="true">🎉</span>Tipo de actividad</h2><button type="button" class="rz-link" id="rzDetails">Ver detalles <svg><use href="#i-chev"/></svg></button></div>
+            <div class="acts" id="acts" role="radiogroup" aria-label="Tipo de actividad"></div>
+          </section>
+
+          <section class="rz-sec">
+            <div class="rz-sechead"><h2><svg><use href="#i-users"/></svg>Cantidad de personas</h2></div>
+            <div class="chips-n" id="peopleChips" role="radiogroup" aria-label="Cantidad de personas"></div>
+            <label class="rz-more" id="peopleMore" hidden>¿Cuántas personas?<input id="bpeople" type="number" min="1" max="500" inputmode="numeric" placeholder="Ej: 65"></label>
+          </section>
+
+          <section class="rz-sec">
+            <div class="rz-sechead"><h2><svg><use href="#i-chat"/></svg>Observaciones <small>(opcional)</small></h2></div>
+            <textarea id="bnote" class="rz-text" rows="2" maxlength="500" placeholder="Cuéntanos más sobre tu evento..."></textarea>
+          </section>
+
+          <button type="button" class="btn pink full rz-next" id="rzNext">Siguiente <svg><use href="#i-chev"/></svg></button>
         </div>
-        <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
-        <div id="calendar" class="calendar" role="grid" aria-label="Calendario de disponibilidad"></div>
-        <div class="legend">
-          <span><i class="dot ok"></i>Disponible</span>
-          <span><i class="dot sp"></i>Entradas individuales</span>
-          <span><i class="dot bk"></i>Reservado</span>
-          <span><i class="dot cl"></i>No disponible</span>
+
+        <div id="rzStepB" hidden>
+          <section class="rz-card">
+            <div class="rz-sechead"><h2><svg><use href="#i-cal"/></svg>Resumen de tu solicitud</h2><button type="button" class="rz-link" id="rzBack"><svg class="flip"><use href="#i-chev"/></svg> Editar</button></div>
+            <dl class="rz-sum" id="rzSum"></dl>
+          </section>
+          <section class="rz-card form">
+            <h2 class="rz-h2">Tus datos</h2>
+            <label>Nombre y apellido<input id="bname" required maxlength="90" autocomplete="name"></label>
+            <label>WhatsApp<input id="bphone" type="tel" required value="+56 9 " placeholder="+56 9 1234 5678" data-prefix="+56 9 " maxlength="25" autocomplete="tel"></label>
+          </section>
+          <div class="policies" id="policies"></div>
+          <button class="btn pink full rz-next" type="submit">Enviar solicitud por WhatsApp <svg><use href="#i-chev"/></svg></button>
+          <p class="tiny center-t">La solicitud no bloquea la fecha ni implica pago. Carla confirmará la disponibilidad.</p>
         </div>
-        <div id="prices" class="prices"></div>
-      </div>
-      <form id="bookingForm" class="card form" novalidate>
-        <h3>Solicita tu reserva</h3>
-        <p class="muted" id="chosenDate">Selecciona un día del calendario.</p>
-        <label>Modalidad<input id="bookingMode" readonly placeholder="Selecciona una fecha"></label>
-        <label>Nombre y apellido<input id="bname" required maxlength="90" autocomplete="name"></label>
-        <div class="row2">
-          <label>WhatsApp<input id="bphone" type="tel" required value="+56 9 " placeholder="+56 9 1234 5678" data-prefix="+56 9 " maxlength="25" autocomplete="tel"></label>
-          <label>Asistentes<input id="bpeople" type="number" min="1" max="500" value="40" required inputmode="numeric"></label>
-        </div>
-        <p class="estimate" id="estimate" aria-live="polite"></p>
-        <label>Comentarios<textarea id="bnote" rows="3" maxlength="500" placeholder="Cuéntanos lo que necesitas"></textarea></label>
-        <button class="btn pink full" type="submit">Preparar solicitud por WhatsApp</button>
-        <p class="tiny">La solicitud no bloquea la fecha ni implica pago. Carla confirmará la disponibilidad.</p>
-        <div class="policies" id="policies"></div>
+        <input type="hidden" id="bookingMode"><p id="estimate" hidden></p>
       </form>
     </div>
-  </section>
   </div>
   <!-- ============ CONTACTO ============ -->
   <div class="view" id="contacto" data-view="contacto" hidden>
@@ -288,6 +318,12 @@
     <dl id="fList"></dl>
     <a class="btn pink full" href="#reservas" data-close>Consultar disponibilidad</a>
   </div>
+</dialog>
+
+<!-- Detalles del arriendo -->
+<dialog id="rzInfo" class="sheet" aria-label="Detalles del arriendo">
+  <button class="v-close dark" data-close aria-label="Cerrar">✕</button>
+  <div class="sheet-body"><div id="prices" class="prices"></div></div>
 </dialog>
 
 <!-- Mensaje WhatsApp preparado / confirmaciones -->

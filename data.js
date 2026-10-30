@@ -55,6 +55,15 @@ window.QUINCHO_DATA = {
       detalles: { 'Menú': 'A solicitud del evento', 'Días de atención': 'Cuando se solicite para el evento' } }
   ],
 
+  /* Tipos de actividad del formulario de reserva */
+  actividades: [
+    { id: 'familiar', svg: 'i-users', color: '#ff1493', titulo: 'Uso familiar', sub: 'Día de piscina, reuniones familiares' },
+    { id: 'celebracion', icono: '🥂', titulo: 'Celebración', sub: 'Cumpleaños, bautizos, aniversarios' },
+    { id: 'curso', icono: '🎒', titulo: 'Paseo de curso', sub: 'Colegios y jardines' },
+    { id: 'privado', icono: '💼', titulo: 'Evento privado', sub: 'Empresas, instituciones' },
+    { id: 'otro', icono: '💬', titulo: 'Otro', sub: 'Consultas especiales' }
+  ],
+
   /* Carrusel de la pantalla de inicio */
   promos: [
     { t1: 'Celebraciones', t2: 'inolvidables', foto: 'assets/evento-noche.jpg', link: '#eventos' },

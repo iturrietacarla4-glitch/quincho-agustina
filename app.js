@@ -162,9 +162,9 @@ function calendar(){
   $('prev').disabled = shown <= new Date(today.getFullYear(), today.getMonth(), 1);
 }
 function pickDate(key){
-  const s = status(key); selected = key; $('chosenDate').innerHTML = `📅 <b>${esc(fmtDate(key))}</b>`;
+  const s = status(key); selected = key; $('chosenDate').innerHTML = `📅 Fecha elegida: <b>${esc(fmtDate(key))}</b>`;
   $('bookingMode').value = s==='individual' ? D.modalidades.individual.nombre : D.modalidades.exclusive.nombre;
-  calendar();
+  calendar(); if (typeof rzPaint === 'function' && $('stepper')) rzPaint();
 }
 $('prev').addEventListener('click', () => { shown.setMonth(shown.getMonth()-1); calendar(); });
 $('next').addEventListener('click', () => { shown.setMonth(shown.getMonth()+1); calendar(); });
@@ -235,12 +235,51 @@ $('eprev').addEventListener('click', () => { eShown.setMonth(eShown.getMonth()-1
 $('enext').addEventListener('click', () => { eShown.setMonth(eShown.getMonth()+1); eventCal(); });
 
 /* ---------- Formularios ---------- */
+/* ---------- Reserva por pasos ---------- */
+const ACTS = D.actividades || [];
+let bAct = '', bPeople = 0;
+const PEOPLE_OPTS = [10, 20, 30, 40, 50];
+function rzInit(){
+  $('acts').innerHTML = ACTS.map(x => `<button type="button" class="act" role="radio" aria-checked="false" data-act="${esc(x.id)}">${x.svg ? `<svg class="aico" style="color:${esc(x.color||'')}"><use href="#${esc(x.svg)}"/></svg>` : `<span class="aemo" aria-hidden="true">${x.icono}</span>`}<b>${esc(x.titulo)}</b><small>${esc(x.sub)}</small></button>`).join('');
+  $('acts').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; bAct = b.dataset.act; rzPaint(); });
+  $('peopleChips').innerHTML = PEOPLE_OPTS.map(n => `<button type="button" role="radio" aria-checked="false" data-n="${n}">${n}</button>`).join('') + `<button type="button" role="radio" aria-checked="false" data-n="more" aria-label="Más de 50 u otra cantidad">+</button>`;
+  $('peopleChips').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return;
+    if (b.dataset.n === 'more'){ $('peopleMore').hidden = false; bPeople = Number($('bpeople').value) || 0; $('bpeople').focus(); }
+    else { $('peopleMore').hidden = true; bPeople = +b.dataset.n; }
+    rzPaint(); });
+  $('bpeople').addEventListener('input', () => { bPeople = Number($('bpeople').value) || 0; rzPaint(); });
+  $('rzDetails').addEventListener('click', () => openDlg($('rzInfo')));
+  $('rzNext').addEventListener('click', () => {
+    if (!selected){ toast('Elige una fecha disponible en el calendario.'); $('calendar').scrollIntoView({behavior:'smooth', block:'center'}); return; }
+    if (!bAct){ toast('Elige el tipo de actividad.'); $('acts').scrollIntoView({behavior:'smooth', block:'center'}); return; }
+    if (!(bPeople >= 1 && bPeople <= 500)){ toast('Indica la cantidad de personas.'); $('peopleChips').scrollIntoView({behavior:'smooth', block:'center'}); return; }
+    rzStep(true);
+  });
+  $('rzBack').addEventListener('click', () => rzStep(false));
+  rzPaint();
+}
+const actName = () => (ACTS.find(x => x.id === bAct) || {}).titulo || '';
+const peopleTxt = () => !$('peopleMore').hidden ? `${bPeople} personas` : `Aprox. ${bPeople} personas`;
+function rzStep(toSummary){
+  $('rzStepA').hidden = toSummary; $('rzStepB').hidden = !toSummary;
+  if (toSummary){
+    const note = $('bnote').value.trim();
+    $('rzSum').innerHTML = `<dt>📅 Fecha</dt><dd>${esc(fmtDate(selected))}</dd><dt>🎉 Actividad</dt><dd>${esc(actName())}</dd><dt>👥 Personas</dt><dd>${esc(peopleTxt())}</dd>` + (note ? `<dt>💬 Observaciones</dt><dd>${esc(note)}</dd>` : '');
+  }
+  rzPaint(); $('stepper').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function rzPaint(){
+  document.querySelectorAll('#acts [data-act]').forEach(b => { const on = b.dataset.act === bAct; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  document.querySelectorAll('#peopleChips [data-n]').forEach(b => { const on = b.dataset.n === 'more' ? !$('peopleMore').hidden : (!$('peopleMore').hidden ? false : +b.dataset.n === bPeople); b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  const done = [!!selected, !!bAct, bPeople > 0], summary = !$('rzStepB').hidden;
+  const cur = summary ? 4 : (done.indexOf(false) + 1 || 3);
+  document.querySelectorAll('#stepper li').forEach(li => { const n = +li.dataset.step; li.classList.toggle('on', n === cur); li.classList.toggle('done', n < 4 && done[n-1] && n !== cur); });
+}
 $('bookingForm').addEventListener('submit', e => {
   e.preventDefault();
-  if (!selected) { toast('Primero elige una fecha habilitada en el calendario.'); $('calendar').scrollIntoView({behavior:'smooth',block:'center'}); return; }
-  if (!check([['bname',req],['bphone',validPhone],['bpeople',num(1,500)]])) { toast('Revisa los campos marcados.'); return; }
-  const r = {id:Date.now(), kind:'Reserva', date:selected, name:$('bname').value.trim(), phone:$('bphone').value.trim(), count:$('bpeople').value, detail:$('bookingMode').value, note:$('bnote').value.trim(), status:'Pendiente'};
-  const msg = `Hola Carla, quisiera solicitar una reserva en ${D.negocio.nombre}.\n\nFecha: ${fmtDate(r.date)}\nModalidad: ${r.detail}\nAsistentes: ${r.count}${EX.mostrarPrecios ? `\nValor referencial: ${priceText(r.count)}` : ''}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nComentarios: ${r.note || 'Sin comentarios'}\n\n¿Me confirmas disponibilidad, valor y abono?`;
+  if (!check([['bname',req],['bphone',validPhone]])) { toast('Revisa tu nombre y WhatsApp.'); return; }
+  const r = {id:Date.now(), kind:'Reserva', date:selected, name:$('bname').value.trim(), phone:$('bphone').value.trim(), count:bPeople, detail:actName(), note:$('bnote').value.trim(), status:'Pendiente'};
+  const msg = `Hola Carla, quisiera solicitar una reserva en ${D.negocio.nombre}.\n\nFecha: ${fmtDate(r.date)}\nActividad: ${r.detail}\nPersonas: ${peopleTxt()}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nObservaciones: ${r.note || 'Sin observaciones'}\n\n¿Me confirmas disponibilidad, valor y abono?`;
   db.requests.push(r); save(); renderAdmin();
   sendWhatsApp('Solicitud de reserva lista', msg);
 });
@@ -552,6 +591,7 @@ function route(){
   let [v, anchor] = ALIAS[h] || [VIEWS.includes(h) ? h : 'inicio'];
   document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
   document.body.dataset.view = v;
+  $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
   if (v === 'admin'){ const u = who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); } }
   if (v === 'inicio') homeCal();
@@ -617,5 +657,5 @@ function homeCal(){
 }
 
 /* ---------- Inicio ---------- */
-facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); home(); route();
+facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); home(); rzInit(); route();
 })();
