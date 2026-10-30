@@ -295,7 +295,7 @@ function contact(){
 }
 
 /* ---------- Panel admin (demo) ---------- */
-let tab = 'dates';
+let tab = 'receipt';
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; renderAdmin(); }));
 function pendingFields(){
   const N = D.negocio, out = [];
@@ -315,6 +315,7 @@ function pendingFields(){
 function renderAdmin(){
   document.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-selected', b.dataset.tab === tab); });
   const c = $('adminContent');
+  if (tab === 'receipt'){ receiptForm(c); return; }
   if (tab === 'dates'){
     c.innerHTML = `<h3>Habilitar o bloquear fechas</h3><p class="muted">Por defecto los días están disponibles; las fechas reservadas vienen de <code>data.js</code>. Aquí puedes ajustar días puntuales (solo en este navegador).</p>
       <div class="form"><div class="row2"><label>Fecha<input id="aDate" type="date" min="${iso(today)}"></label>
@@ -351,6 +352,121 @@ function renderAdmin(){
     const p = pendingFields();
     c.innerHTML = `<h3>Datos pendientes de confirmar (${p.length})</h3><p class="muted">Estos campos se muestran como «Por confirmar». Se editan en <code>data.js</code> (o en Precios).</p><ul class="pendlist">${p.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   }
+}
+
+/* ---------- Generador de comprobantes (no guarda datos) ---------- */
+let rcpt = { cliente:'', fecha:'', horario:'', personas:'', incluye:'', total:'', abonos:[{fecha:iso(today), monto:'', medio:''}] };
+let rcptBlob = null, rcptUrl = '';
+function receiptForm(c){
+  c.innerHTML = `<h3>Comprobante de reserva</h3>
+    <p class="muted">Completa los datos y genera la imagen para enviarla al cliente por WhatsApp. Nada de esto se guarda ni se publica.</p>
+    <div class="form rform">
+      <label>Cliente<input id="rCliente" maxlength="80" placeholder="Nombre del cliente o curso"></label>
+      <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" placeholder="Ej: 9:30 a 20:00 / Full day"></label></div>
+      <div class="row2"><label>Personas<input id="rPersonas" type="number" min="0" inputmode="numeric"></label><label>Valor total (CLP)<input id="rTotal" type="number" min="0" step="1000" inputmode="numeric" placeholder="Opcional"></label></div>
+      <label>Incluye<textarea id="rIncluye" rows="3" maxlength="400" placeholder="Ej: Pack full day: 34 personas"></textarea></label>
+      <fieldset><legend>Abonos</legend><div id="rAbonos"></div><button type="button" class="mini" id="rAddAb">+ Agregar abono</button></fieldset>
+      <p class="rsum" id="rSum"></p>
+      <button type="button" class="btn pink full" id="rGen">Generar comprobante</button>
+    </div>
+    <div id="rOut" class="rout" hidden>
+      <img id="rPrev" alt="Vista previa del comprobante">
+      <div class="modal-actions">
+        <button type="button" class="btn green" id="rShare">📲 Compartir / WhatsApp</button>
+        <a class="btn outline-dark" id="rDown" download="comprobante.png" href="#">⬇ Descargar imagen</a>
+      </div>
+      <p class="tiny" id="rMsg">Si los botones no funcionan en tu teléfono, mantén presionada la imagen y elige «Guardar imagen».</p>
+    </div>`;
+  const map = {rCliente:'cliente', rFecha:'fecha', rHorario:'horario', rPersonas:'personas', rTotal:'total', rIncluye:'incluye'};
+  Object.entries(map).forEach(([id,k]) => { const el = $(id); el.value = rcpt[k]; el.addEventListener('input', () => { rcpt[k] = el.value; rSum(); }); });
+  const drawAb = () => {
+    $('rAbonos').innerHTML = rcpt.abonos.map((ab,i) => `<div class="abrow"><input type="date" data-ab="${i}" data-k="fecha" value="${esc(ab.fecha)}" aria-label="Fecha del abono"><input type="number" min="0" step="1000" inputmode="numeric" data-ab="${i}" data-k="monto" value="${esc(ab.monto)}" placeholder="Monto" aria-label="Monto del abono"><input data-ab="${i}" data-k="medio" value="${esc(ab.medio)}" placeholder="Medio (transferencia…)" aria-label="Medio de pago" maxlength="40"><button type="button" class="mini danger" data-del-ab="${i}" aria-label="Quitar abono">✕</button></div>`).join('') || '<p class="tiny">Sin abonos.</p>';
+    $('rAbonos').querySelectorAll('[data-ab]').forEach(inp => inp.addEventListener('input', () => { rcpt.abonos[+inp.dataset.ab][inp.dataset.k] = inp.value; rSum(); }));
+    $('rAbonos').querySelectorAll('[data-del-ab]').forEach(b => b.onclick = () => { rcpt.abonos.splice(+b.dataset.delAb,1); drawAb(); rSum(); });
+  };
+  $('rAddAb').onclick = () => { rcpt.abonos.push({fecha:iso(today), monto:'', medio:''}); drawAb(); };
+  drawAb(); rSum();
+  $('rGen').onclick = async () => {
+    if (!rcpt.cliente.trim() || !rcpt.fecha) { toast('Completa al menos el cliente y la fecha.'); (!rcpt.cliente.trim() ? $('rCliente') : $('rFecha')).focus(); return; }
+    $('rGen').disabled = true; $('rGen').textContent = 'Generando…';
+    try {
+      rcptBlob = await drawReceipt(rcpt);
+      if (rcptUrl) URL.revokeObjectURL(rcptUrl);
+      rcptUrl = URL.createObjectURL(rcptBlob);
+      const name = 'comprobante-' + rcpt.fecha + '-' + rcpt.cliente.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) + '.png';
+      $('rPrev').src = rcptUrl; $('rDown').href = rcptUrl; $('rDown').download = name;
+      $('rOut').hidden = false; $('rOut').scrollIntoView({behavior:'smooth', block:'start'});
+      $('rShare').onclick = async () => {
+        const file = new File([rcptBlob], name, {type:'image/png'});
+        try {
+          if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:'Comprobante de reserva'}); }
+          else toast('Tu navegador no permite compartir directo: usa «Descargar imagen».');
+        } catch (e) { if (e && e.name !== 'AbortError') toast('No se pudo compartir; usa «Descargar imagen».'); }
+      };
+    } catch (e) { toast('No se pudo generar la imagen.'); }
+    $('rGen').disabled = false; $('rGen').textContent = 'Generar comprobante';
+  };
+}
+const abTotal = r => r.abonos.reduce((s,a) => s + (Number(a.monto)||0), 0);
+function rSum(){
+  const el = $('rSum'); if (!el) return;
+  const tot = Number(rcpt.total)||0, ab = abTotal(rcpt);
+  el.innerHTML = `Abonado: <b>${clp(ab) || '$0'}</b>` + (tot ? ` · Saldo pendiente: <b>${clp(Math.max(0,tot-ab))}</b>` : '');
+}
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+function wrap(ctx, txt, maxW){ const out=[]; String(txt).split(/\n/).forEach(par => { let cur=''; par.split(' ').forEach(w => { const t = cur ? cur+' '+w : w; if (ctx.measureText(t).width > maxW && cur){ out.push(cur); cur = w; } else cur = t; }); out.push(cur); }); return out; }
+const fShort = f => { if (!f) return '—'; const [y,m,d] = f.split('-'); return `${d}-${m}-${y}`; };
+async function drawReceipt(r){
+  try { await Promise.all([document.fonts.load('700 60px Fredoka'), document.fonts.load('700 30px Nunito'), document.fonts.load('600 30px Nunito')]); } catch {}
+  const logo = await loadImg('assets/logo.webp').catch(() => null);
+  const HEAD = 'Fredoka, "Segoe UI", sans-serif', BODY = 'Nunito, system-ui, sans-serif';
+  const P = {pink:'#ff1493', teal:'#067f93', tealL:'#dcf7fb', lime:'#c8ff00', ink:'#1d2a3a', muted:'#7b8794', ok:'#1fae5b', pinkL:'#ffe1f1'};
+  const W = 1080, PX = 80, CW = W - PX*2;
+  const m = document.createElement('canvas').getContext('2d'); m.font = '600 32px ' + BODY;
+  const incl = r.incluye.trim() ? wrap(m, r.incluye.trim(), CW - 60) : [];
+  const abonos = r.abonos.filter(a => Number(a.monto) > 0);
+  const tot = Number(r.total)||0, ab = abTotal(r);
+  const H = 1700 + incl.length*44 + Math.max(1,abonos.length)*58;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  const rr = (X,Y,w,h,rad) => { x.beginPath(); x.moveTo(X+rad,Y); x.arcTo(X+w,Y,X+w,Y+h,rad); x.arcTo(X+w,Y+h,X,Y+h,rad); x.arcTo(X,Y+h,X,Y,rad); x.arcTo(X,Y,X+w,Y,rad); x.closePath(); };
+  x.fillStyle = '#fff'; x.fillRect(0,0,W,H);
+  const g = x.createLinearGradient(0,0,W,380); g.addColorStop(0,'#3fd8ea'); g.addColorStop(1,'#0bbcd4');
+  x.fillStyle = g; x.beginPath(); x.moveTo(0,0); x.lineTo(W,0); x.lineTo(W,330); for (let X=W; X>=0; X-=10) x.lineTo(X, 330 + Math.sin(X/70)*16); x.closePath(); x.fill();
+  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 4;
+  for (let k=0;k<3;k++){ x.beginPath(); for (let X=0; X<=W; X+=10){ const Y = 70 + k*85 + Math.sin(X/55+k)*10; X ? x.lineTo(X,Y) : x.moveTo(X,Y); } x.stroke(); }
+  let y = 380;
+  if (logo){ const lw = 560, lh = lw*logo.naturalHeight/logo.naturalWidth; x.drawImage(logo, (W-lw)/2, 18, lw, lh); y = Math.max(390, 18+lh+60); }
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  x.fillStyle = P.pink; x.font = '700 64px ' + HEAD; x.fillText('Comprobante de reserva', W/2, y+20);
+  y += 72; x.fillStyle = P.teal; x.font = '800 38px ' + BODY;
+  const fl = fmtDate(r.fecha); x.fillText(fl.charAt(0).toUpperCase()+fl.slice(1), W/2, y);
+  y += 60; x.strokeStyle = '#e8edf2'; x.lineWidth = 2; x.beginPath(); x.moveTo(PX,y); x.lineTo(W-PX,y); x.stroke(); y += 60;
+  const row = (lab, val) => { x.textAlign='left'; x.fillStyle=P.muted; x.font='700 30px '+BODY; x.fillText(lab, PX, y);
+    x.textAlign='right'; x.fillStyle=P.ink; x.font='800 32px '+BODY; let v=String(val); while (x.measureText(v).width > CW-260 && v.length>4) v=v.slice(0,-2); if (v!==String(val)) v=v.trim()+'…'; x.fillText(v, W-PX, y); y += 58; };
+  row('Cliente', r.cliente.trim());
+  if (r.horario.trim()) row('Horario', r.horario.trim());
+  if (Number(r.personas)) row('Personas', r.personas);
+  if (incl.length){ y += 6; x.textAlign='left'; x.fillStyle=P.muted; x.font='700 30px '+BODY; x.fillText('Incluye', PX, y); y += 24;
+    const bh = incl.length*44 + 36; rr(PX,y,CW,bh,22); x.fillStyle=P.tealL; x.fill();
+    x.fillStyle=P.ink; x.font='600 32px '+BODY; incl.forEach((l,i) => x.fillText(l, PX+30, y+50+i*44)); y += bh + 56; }
+  else y += 20;
+  x.textAlign='left'; x.fillStyle=P.teal; x.font='700 40px '+HEAD; x.fillText('Pagos', PX, y); y += 54;
+  if (abonos.length) abonos.forEach(a => { x.textAlign='left'; x.fillStyle=P.ink; x.font='700 30px '+BODY; x.fillText('Abono ' + fShort(a.fecha) + (a.medio.trim() ? ' · ' + a.medio.trim() : ''), PX, y);
+      x.textAlign='right'; x.font='800 32px '+BODY; x.fillStyle=P.ok; x.fillText(clp(a.monto), W-PX, y); y += 58; });
+  else { x.textAlign='left'; x.fillStyle=P.muted; x.font='600 30px '+BODY; x.fillText('Sin abonos registrados', PX, y); y += 58; }
+  y += 10; const boxH = tot ? 230 : 120; rr(PX,y,CW,boxH,26); x.fillStyle=P.pinkL; x.fill();
+  const tl = (lab,val,col,yy,big) => { x.textAlign='left'; x.fillStyle=P.ink; x.font=(big?'800 36px ':'700 32px ')+BODY; x.fillText(lab, PX+34, yy);
+    x.textAlign='right'; x.fillStyle=col; x.font=(big?'700 46px ':'700 36px ')+HEAD; x.fillText(val, W-PX-34, yy); };
+  if (tot){ tl('Valor total', clp(tot), P.ink, y+62); tl('Total abonado', clp(ab), P.ok, y+124); tl('Saldo pendiente', clp(Math.max(0,tot-ab)), P.pink, y+192, true); }
+  else tl('Total abonado', clp(ab) || '$0', P.ok, y+74, true);
+  y += boxH + 70;
+  if (!tot){ x.textAlign='center'; x.fillStyle=P.muted; x.font='600 28px '+BODY; x.fillText('Valor total por confirmar', W/2, y-14); y += 50; }
+  x.textAlign='center'; x.fillStyle=P.teal; x.font='800 30px '+BODY;
+  x.fillText('WhatsApp ' + C.whatsappTexto + '   ·   ' + D.negocio.redes.instagram.usuario, W/2, y);
+  y += 44; x.fillStyle=P.muted; x.font='600 26px '+BODY; x.fillText(D.negocio.ubicacion + '  ·  Emitido el ' + fmtDate(iso(today)), W/2, y);
+  y += 40; x.fillStyle=P.lime; x.fillRect(0, y, W, 14);
+  const out = document.createElement('canvas'); out.width = W; out.height = Math.ceil(y+14); out.getContext('2d').drawImage(cv,0,0);
+  return await new Promise(res => out.toBlob(res, 'image/png'));
 }
 
 /* ---------- Inicio ---------- */
