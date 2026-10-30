@@ -1064,3 +1064,6 @@ footer.sfoot .fleaf.c{width:clamp(64px,16vw,110px)}
 footer.sfoot .sf-in{text-align:center}
 .sf-dudas{font-size:12.5px;padding:9px 14px;text-align:center}
 @media (min-width:1000px){ footer.sfoot .fleaf{width:150px} footer.sfoot .fleaf.c{width:120px} footer.sfoot .sf-fl{height:52px} }
+
+.sbstat{font-size:13px;font-weight:800;padding:8px 12px;border-radius:12px;margin:0 0 6px}
+.sbstat.ok{background:#e6f8ec;color:#13804a}.sbstat.bad{background:#fff0f0;color:#b4233d}.sbstat.wait{background:#f1f4f7;color:#5d6b7a}

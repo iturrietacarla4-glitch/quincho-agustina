@@ -670,10 +670,25 @@ const sbReady = new Promise(res => {
   if (!SBC.url || !SBC.anonKey) return res(null);
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  s.onload = () => { try { SB = window.supabase.createClient(SBC.url, SBC.anonKey); } catch { SB = null; } res(SB); };
-  s.onerror = () => res(null);
+  s.onload = async () => {
+    try { SB = window.supabase.createClient(SBC.url, SBC.anonKey); } catch { SB = null; return res(null); }
+    try {
+      const { error } = await SB.from('fechas_bloqueadas').select('fecha', { head:true, count:'exact' });
+      if (error) { window.SB_STATUS = /does not exist|PGRST20|42P01/i.test(error.message + error.code) ? 'nosql' : 'error:' + error.message; if (window.SB_STATUS === 'nosql') SB = null; }
+      else window.SB_STATUS = 'ok';
+    } catch (e) { window.SB_STATUS = 'offline'; SB = null; }
+    sbStatus(); res(SB);
+  };
+  s.onerror = () => { window.SB_STATUS = 'offline'; sbStatus(); res(null); };
   document.head.append(s);
 });
+function sbStatus(){
+  const el = $('sbStat'); if (!el) return;
+  const s = window.SB_STATUS || (SBC.url ? 'checking' : 'off');
+  const M = { ok:['ok','✔ Conectado a la base de datos'], nosql:['bad','✖ Falta ejecutar supabase.sql en Supabase'], offline:['bad','✖ No se pudo conectar con Supabase (modo local)'], off:['bad','Base de datos no configurada (modo local)'], checking:['wait','Conectando con la base de datos…'] };
+  const [cls, txt] = M[s] || ['bad', '✖ ' + s.replace(/^error:/,'Error: ')];
+  el.className = 'sbstat ' + cls; el.textContent = txt;
+}
 async function sbLoadDates(){
   if (!SB) return;
   const { data, error } = await SB.from('fechas_bloqueadas').select('fecha');

@@ -7,7 +7,7 @@
 window.QUINCHO_DATA = {
   /* Supabase: pegar aquí la Project URL y la anon public key (Settings → API).
      La anon key es pública por diseño; la seguridad la dan las reglas RLS de supabase.sql. */
-  supabase: { url: '', anonKey: '' },
+  supabase: { url: 'https://eozncmvlgcckzbyfykmv.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvem5jbXZsZ2Nja3pieWZ5a212Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNDc4OTQsImV4cCI6MjEwODkyMzg5NH0.iOnNB_Udk6GIpiJirgVMtOXNV4AYE7ZMnpYckfpuN_c' },
 
   negocio: {
     nombre: 'El Quincho de Agustina',
