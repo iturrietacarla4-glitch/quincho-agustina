@@ -192,10 +192,20 @@
   </section>
 
   <!-- ADMIN DEMO -->
-  <section id="admin" class="section admin">
-    <details class="admin-wrap">
-      <summary>🔒 Panel de administración (demo)</summary>
-      <div class="warning">⚠ Versión demostrativa: los datos se guardan solo en este navegador. No es un panel seguro ni sincronizado. No uses datos reales hasta conectar autenticación y base de datos.</div>
+  <section id="admin" class="section admin" hidden>
+    <div class="admin-login card" id="adminLogin">
+      <h3>🔒 Acceso administración</h3>
+      <p class="muted">Solo para Carla y Matías.</p>
+      <form id="loginForm" class="form" autocomplete="off">
+        <label>Usuario<select id="lUser"></select></label>
+        <label>PIN<input id="lPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" required></label>
+        <button class="btn pink full" type="submit">Entrar</button>
+        <p class="tiny" id="lMsg"></p>
+      </form>
+    </div>
+    <details class="admin-wrap" id="adminPanel" hidden open>
+      <summary>🔒 Administración · <span id="adminWho"></span> <button type="button" class="mini danger" id="logout" style="float:right">Salir</button></summary>
+      <div class="warning">ℹ️ Lo que guardes aquí (precios de planes, ajustes de fechas) queda solo en este dispositivo. Los comprobantes no se guardan. Para bloquear fechas en la página pública, avisa a FLUVA.</div>
       <div class="tabs" role="tablist">
         <button data-tab="receipt" class="active" role="tab">🧾 Comprobante</button>
         <button data-tab="dates" role="tab">Fechas</button>

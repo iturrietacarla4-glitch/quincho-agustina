@@ -8,6 +8,7 @@
   --head:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth;scroll-padding-top:84px}
 body{margin:0;font:16px/1.6 var(--body);color:var(--ink);background:var(--white);-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
@@ -202,6 +203,8 @@ legend{font-size:13.5px;font-weight:800;padding:0 6px}
 
 /* Admin */
 .admin{background:#f3f6f9;padding-top:40px;padding-bottom:50px}
+.admin{min-height:70vh}
+.admin-login{max-width:420px;margin:20px auto}
 .admin-wrap summary{cursor:pointer;font-family:var(--head);font-weight:600;font-size:18px;padding:14px 18px;background:#fff;border-radius:16px;box-shadow:var(--shadow);list-style:none}
 .admin-wrap summary::-webkit-details-marker{display:none}
 .admin-wrap[open] summary{margin-bottom:16px}

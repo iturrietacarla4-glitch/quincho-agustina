@@ -104,6 +104,9 @@ window.QUINCHO_DATA = {
     individual: { nombre: 'Entrada individual (fechas especiales)', precioAdulto: null, precioNino: null }
   },
 
+  /* Acceso a administración (#admin). Se guarda el hash SHA-256 de 'quincho-agustina|' + PIN, nunca el PIN. */
+  administradores: [{"nombre": "Carla", "pin": "f7b52ec8317b8d420d0997f61d93dc469becdaceff20e0f67174fe69fc59fa8a"}, {"nombre": "Matías", "pin": "2527f2f0abee9bfd7b2fb225b043f27d7da463a0db11f06999bc675fdce67237"}],
+
   /* Calendario público. Solo fechas, sin datos de clientes.
      Copiadas de la "Agenda El Quincho de Agustina" (actualizar al tomar reservas nuevas). */
   disponibilidadPorDefecto: 'exclusive',   // días futuros no reservados = disponibles para arriendo

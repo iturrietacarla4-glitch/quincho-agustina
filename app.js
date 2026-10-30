@@ -544,6 +544,34 @@ async function drawReceipt(r){
   return await new Promise(res => out.toBlob(res, 'image/png'));
 }
 
+/* ---------- Acceso administración (#admin) ---------- */
+const ADM_SALT = 'quincho-agustina|', SKEY = 'quincho-admin';
+async function sha(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
+const who = () => { try { return sessionStorage.getItem(SKEY) || ''; } catch { return ''; } };
+function adminRoute(){
+  const on = location.hash === '#admin';
+  $('admin').hidden = !on;
+  document.querySelectorAll('main > section:not(#admin), .floating').forEach(s => s.hidden = on);
+  if (!on) return;
+  const u = who();
+  $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u;
+  if (u) { $('adminWho').textContent = u; renderAdmin(); }
+  window.scrollTo(0,0);
+}
+$('lUser').innerHTML = (D.administradores || []).map(x => `<option>${esc(x.nombre)}</option>`).join('');
+let tries = 0;
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (tries >= 5) { $('lMsg').textContent = 'Demasiados intentos. Recarga la página para intentar de nuevo.'; return; }
+  const adm = (D.administradores || []).find(x => x.nombre === $('lUser').value);
+  let ok = false; try { ok = !!adm && (await sha(ADM_SALT + $('lPin').value.trim())) === adm.pin; } catch {}
+  if (!ok) { tries++; $('lMsg').textContent = 'PIN incorrecto.'; $('lPin').value = ''; $('lPin').focus(); return; }
+  try { sessionStorage.setItem(SKEY, adm.nombre); } catch {}
+  $('lPin').value = ''; $('lMsg').textContent = ''; adminRoute();
+});
+$('logout').addEventListener('click', e => { e.preventDefault(); try { sessionStorage.removeItem(SKEY); } catch {} adminRoute(); });
+window.addEventListener('hashchange', adminRoute);
+
 /* ---------- Inicio ---------- */
-facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); renderAdmin(); revealAll();
+facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); revealAll(); adminRoute();
 })();
