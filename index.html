@@ -89,7 +89,7 @@
   <a href="#eventos"><span class="dmi t-lav" aria-hidden="true"><svg><use href="#m-balloons"/></svg></span>Eventos</a>
   <a href="#reservas"><span class="dmi t-teal" aria-hidden="true"><svg><use href="#m-cal"/></svg></span>Reservas</a>
   <a href="#contacto"><span class="dmi t-sky" aria-hidden="true"><svg><use href="#m-phone"/></svg></span>Contacto y ubicación</a>
-  <a href="#visitantes"><span class="dmi t-pink" aria-hidden="true"><svg><use href="#m-users"/></svg></span>Nuestros visitantes</a>
+  <a href="#recuerdos"><span class="dmi t-pink" aria-hidden="true"><svg><use href="#i-heart"/></svg></span>Recuerdos</a>
 </nav>
 <main id="main">
   <!-- ============ INICIO ============ -->
@@ -125,7 +125,7 @@
       <div class="sec-title"><h2>Disfruta de nuestras instalaciones</h2><a href="#instalaciones">Ver todas <svg><use href="#i-chev"/></svg></a></div>
       <div class="strip" id="homeStrip"></div>
       <section id="homeMem" hidden>
-        <div class="sec-title"><h2>Recuerdos de nuestros visitantes</h2><a href="#visitantes">Ver mural <svg><use href="#i-chev"/></svg></a></div>
+        <div class="sec-title"><h2>Recuerdos de nuestros visitantes</h2><a href="#recuerdos">Ver mural <svg><use href="#i-chev"/></svg></a></div>
         <div class="strip mstrip" id="homeMemStrip"></div>
       </section>
       <div class="sec-title" id="disponibilidad"><h2>Consulta tu fecha</h2><a href="#reservas">Reservar <svg><use href="#i-chev"/></svg></a></div>
@@ -257,18 +257,10 @@
       </form>
     </div>
   </div>
-  <!-- ============ CONTACTO ============ -->
-  <div class="view" id="contacto" data-view="contacto" hidden>
-    <div class="view-head"><h1>Contacto</h1></div>
+  <!-- ============ RECUERDOS ============ -->
+  <div class="view" id="recuerdos" data-view="recuerdos" hidden>
+    <div class="view-head"><h1>Recuerdos</h1></div>
     <div class="page">
-      <header class="page-intro"><span class="pill2 t-sky">Contacto y ubicación</span><h2>Hablemos de tu próximo día</h2><p><b id="cName"></b> · <span id="cRole"></span></p></header>
-      <div class="cgrid" id="cInfo"></div>
-      <div class="card2 mapcard">
-        <span class="bigmi t-lime" aria-hidden="true"><svg><use href="#m-pin"/></svg></span>
-        <div><h3>Cómo llegar</h3><p id="cLoc"></p></div>
-        <a class="btn2 ghost" id="cMaps" href="#" target="_blank" rel="noopener"><svg><use href="#m-pin"/></svg>Abrir en Google Maps</a>
-      </div>
-      <a class="btn2 wa full" id="cWa" href="#" target="_blank" rel="noopener"><svg><use href="#m-wa"/></svg>Escribir a Carla por WhatsApp</a>
       <section id="visitantes" class="vis-sec">
         <header class="vis-hero">
           <svg class="vleaf l" aria-hidden="true"><use href="#lf-monstera"/></svg><svg class="vleaf r" aria-hidden="true"><use href="#lf-palm"/></svg>
@@ -315,6 +307,21 @@
       </section>
     </div>
   </div>
+  <!-- ============ CONTACTO ============ -->
+  <div class="view" id="contacto" data-view="contacto" hidden>
+    <div class="view-head"><h1>Contacto</h1></div>
+    <div class="page">
+      <header class="page-intro"><span class="pill2 t-sky">Contacto y ubicación</span><h2>Hablemos de tu próximo día</h2><p><b id="cName"></b> · <span id="cRole"></span></p></header>
+      <div class="cgrid" id="cInfo"></div>
+      <div class="card2 mapcard">
+        <span class="bigmi t-lime" aria-hidden="true"><svg><use href="#m-pin"/></svg></span>
+        <div><h3>Cómo llegar</h3><p id="cLoc"></p></div>
+        <a class="btn2 ghost" id="cMaps" href="#" target="_blank" rel="noopener"><svg><use href="#m-pin"/></svg>Abrir en Google Maps</a>
+      </div>
+      <a class="btn2 wa full" id="cWa" href="#" target="_blank" rel="noopener"><svg><use href="#m-wa"/></svg>Escribir a Carla por WhatsApp</a>
+      <a class="card2 mem-link" href="#recuerdos"><span class="mi t-pink" aria-hidden="true"><svg><use href="#i-heart"/></svg></span><span><b>Historias que quedan</b><small>Mira y comparte los recuerdos de nuestros visitantes</small></span><svg class="chev"><use href="#i-chev"/></svg></a>
+    </div>
+  </div>
   <div class="view" data-view="admin" hidden>
   <section id="admin" class="section admin">
     <div class="admin-login card" id="adminLogin">
@@ -354,8 +361,8 @@
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Secciones">
   <a href="#inicio" data-tab-link="inicio"><svg class="tbs"><use href="#m-home"/></svg><span>Inicio</span></a>
-  <a href="#instalaciones" data-tab-link="instalaciones"><svg class="tbs"><use href="#m-roof"/></svg><span>Instalaciones</span></a>
   <a href="#eventos" data-tab-link="eventos"><svg class="tbs"><use href="#m-balloons"/></svg><span>Eventos</span></a>
+  <a href="#recuerdos" data-tab-link="recuerdos" class="tab-c"><span class="tc-b"><svg><use href="#i-heart"/></svg></span><span>Recuerdos</span></a>
   <a href="#reservas" data-tab-link="reservas"><svg class="tbs"><use href="#m-cal"/></svg><span>Reservas</span></a>
   <a href="#contacto" data-tab-link="contacto"><svg class="tbs"><use href="#m-phone"/></svg><span>Contacto</span></a>
 </nav>

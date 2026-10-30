@@ -954,8 +954,8 @@ async function memAdmin(c){
 }
 
 /* ---------- Pestañas (rutas por #hash) ---------- */
-const VIEWS = ['inicio','instalaciones','eventos','reservas','contacto','admin'];
-const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], disponibilidad:['inicio','disponibilidad'], main:['inicio'] };
+const VIEWS = ['inicio','instalaciones','eventos','recuerdos','reservas','contacto','admin'];
+const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['recuerdos'], mural:['recuerdos'], disponibilidad:['inicio','disponibilidad'], main:['inicio'] };
 let curView = '';
 function route(){
   const h = location.hash.slice(1);
@@ -963,7 +963,7 @@ function route(){
   document.querySelectorAll('dialog[open]').forEach(closeDlg);
   document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
   document.body.dataset.view = v;
-  $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
+  $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', recuerdos:'Recuerdos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
   if (v === 'admin'){ const u = SB ? ADMIN : who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); memBadge(); } }
   if (v === 'inicio') homeCal();

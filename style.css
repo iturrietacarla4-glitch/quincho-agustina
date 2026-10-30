@@ -981,3 +981,27 @@ img.img-err{opacity:0}
 .toast{border-radius:16px!important;max-width:min(92vw,420px);line-height:1.4;padding:12px 18px}
 .minors>span{flex-basis:100%}
 .sw{background:#d5dde6!important}.switch input:checked+.sw{background:var(--green)!important}
+
+/* Pestaña central Recuerdos */
+.tabbar{overflow:visible}
+.tab-c{position:relative}
+.tab-c .tc-b{width:60px;height:60px;margin-top:-30px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(145deg,#ff4fae,#ff1493);border:4px solid #fff;box-shadow:0 10px 24px rgba(255,20,147,.45);transition:transform .2s}
+.tab-c .tc-b svg{width:28px;height:28px}
+.tab-c.on .tc-b{transform:translateY(-3px) scale(1.06);animation:beat 1.6s ease-in-out 1}
+.tab-c span:last-child{color:var(--pink);font-weight:800}
+.tabbar a.tab-c.on::before{display:none}
+@keyframes beat{0%,100%{transform:translateY(-3px) scale(1.06)}40%{transform:translateY(-3px) scale(1.16)}}
+@media (prefers-reduced-motion:reduce){.tab-c.on .tc-b{animation:none}}
+@media (min-width:1000px){
+  .tab-c .tc-b{width:30px;height:30px;margin:0;border-width:0;box-shadow:0 4px 10px rgba(255,20,147,.35)}
+  .tab-c .tc-b svg{width:16px;height:16px}
+  .tabbar a.tab-c{background:#ffe4f1}
+}
+.mem-link{display:flex;align-items:center;gap:12px;margin-top:14px;background:linear-gradient(120deg,#fff0f7,#fff)}
+.mem-link>span:nth-child(2){flex:1;display:flex;flex-direction:column}
+.mem-link b{font-family:var(--head);font-size:17px;color:var(--navy)}
+.mem-link small{color:var(--muted);font-size:13px}
+.mem-link .chev{width:18px;height:18px;color:var(--pink)}
+#recuerdos .vis-sec{margin-top:0}
+.tabbar .tab-c .tc-b svg{color:#fff!important;transform:none!important}
