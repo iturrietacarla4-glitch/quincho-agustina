@@ -72,6 +72,9 @@
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3.5 7.5 7 11M3.5 7.5H17M17 13l3.5 3.5L17 20M20.5 16.5H7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="s-fb" viewBox="0 0 24 24"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.9v3h2.6V21z" fill="currentColor"/></symbol>
     <symbol id="s-tt" viewBox="0 0 24 24"><path d="M16.6 3c.3 2.2 1.6 3.6 3.9 3.8v2.6c-1.4.1-2.6-.3-3.9-1.1v5.6c0 7.1-7.7 9.3-10.8 4.2-2-3.3-.8-9.1 5.6-9.3v2.7c-.5.1-1 .2-1.5.4-1.5.5-2.3 1.4-2.1 3 .5 3.1 6.2 4 5.7-2.1V3z" fill="currentColor"/></symbol>
+    <symbol id="a-req" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 3.5V2.5h6v1M8 9h8M8 13h8M8 17h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="a-doc" viewBox="0 0 24 24"><path d="M6 2.8h8l4.5 4.5V19a2.2 2.2 0 0 1-2.2 2.2H6A2.2 2.2 0 0 1 3.8 19V5A2.2 2.2 0 0 1 6 2.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.6 3v4.6h4.6M7.5 12h8M7.5 16h5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="a-ok" viewBox="0 0 24 24"><rect x="3" y="4.8" width="18" height="16" rx="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9.6h18M8 2.8v4M16 2.8v4M8.5 14.8l2.4 2.4 4.6-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="lf-monstera" viewBox="0 0 120 120"><path d="M60 112C30 108 8 84 10 54 12 26 36 6 62 8c28 2 50 26 48 54-2 30-24 52-50 50z" fill="currentColor"/><g fill="#fff" opacity=".9"><path d="M60 112 58 30" stroke="#fff" stroke-width="3" fill="none"/><path d="M18 46c10 2 20 4 30 10-8-10-18-14-28-14zM14 70c12-2 22-2 34 2-10-8-22-8-32-6zM24 92c10-6 18-8 28-8-10-4-20-2-28 4zM102 44c-10 2-20 4-30 10 8-10 18-14 28-14zM106 68c-12-2-22-2-34 2 10-8 22-8 32-6zM96 90c-10-6-18-8-28-8 10-4 20-2 28 4z"/><ellipse cx="38" cy="60" rx="5" ry="3"/><ellipse cx="82" cy="58" rx="5" ry="3"/></g></symbol>
     <symbol id="lf-palm" viewBox="0 0 120 120"><path d="M10 110C40 80 70 50 112 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><g fill="currentColor"><path d="M26 94c-10-4-18-14-18-26 10 4 18 12 22 22zM36 84c-10-6-14-18-12-30 8 6 14 16 16 26zM48 72c-8-8-10-20-6-32 8 8 10 20 10 30zM60 60c-6-10-6-22 0-32 6 10 6 22 4 32zM72 48c-4-10-2-22 6-30 4 10 2 22-2 30zM84 36c-2-10 2-20 10-26 2 10-2 20-8 26zM30 98c4 10 14 16 26 16-4-10-12-16-22-18zM42 86c6 8 18 12 30 10-6-8-16-12-26-12zM54 74c8 6 20 8 30 4-8-6-18-8-28-6zM66 62c8 6 20 6 30 0-8-4-20-4-28-2zM78 50c8 4 20 2 28-4-8-4-18-2-26 2z"/></g></symbol>
     <symbol id="lf-leaf" viewBox="0 0 120 120"><path d="M14 106C18 56 50 18 108 12 102 68 68 102 14 106z" fill="currentColor"/><path d="M14 106C44 76 72 48 104 16M40 80l-4-24M56 64l-2-22M72 48l2-20M44 78l22 2M60 62l22 0M76 46l18-2" fill="none" stroke="#fff" stroke-width="2.6" opacity=".7" stroke-linecap="round"/></symbol>
@@ -338,20 +341,25 @@
         <p class="tiny" id="lMsg"></p>
       </form>
     </div>
-    <details class="admin-wrap" id="adminPanel" hidden open>
-      <summary>🔒 Administración · <span id="adminWho"></span> <button type="button" class="mini danger" id="logout" style="float:right">Salir</button></summary>
-      <div class="warning" id="admWarn" role="status"></div>
-      <div class="tabs" role="tablist">
-        <button data-tab="receipt" class="active" role="tab">🧾 Comprobante</button>
-        <button data-tab="dates" role="tab">Fechas</button>
-        <button data-tab="requests" role="tab">Solicitudes</button>
-        <button data-tab="photos" role="tab">Fotos</button>
-        <button data-tab="memories" role="tab">Mural <span class="tbadge" id="memBadge" hidden></span></button>
-        <button data-tab="backup" role="tab">🛡️ Respaldo</button>
-        <button data-tab="pending" role="tab">Datos pendientes</button>
+    <div class="adm" id="adminPanel" hidden>
+      <header class="adm-head">
+        <img class="adm-leaf" src="assets/hoja-palma.webp" alt="" aria-hidden="true">
+        <img class="adm-logo" src="assets/logo.webp" alt="El Quincho de Agustina" width="900" height="569">
+        <div class="adm-tt"><h2>Administración</h2><p>Panel de control · <span id="adminWho"></span></p></div>
+        <a class="adm-msg" id="admMsg" href="#" target="_blank" rel="noopener" aria-label="Abrir WhatsApp"><svg><use href="#m-wa"/></svg></a>
+      </header>
+      <div class="adm-body">
+        <div class="adm-warn" id="admWarn" role="status"></div>
+        <div id="adminContent"></div>
       </div>
-      <div id="adminContent" class="card"></div>
-    </details>
+      <nav class="adm-nav" aria-label="Administración">
+        <button type="button" data-tab="home"><i class="ai" style="--i:url(assets/adm/inicio.svg)"></i><span>Inicio</span></button>
+        <button type="button" data-tab="requests"><svg class="ai2"><use href="#a-req"/></svg><span>Solicitudes</span><b class="nbadge" id="reqBadge" hidden></b></button>
+        <button type="button" data-tab="cal"><i class="ai" style="--i:url(assets/adm/bloquear_fecha.svg)"></i><span>Calendario</span></button>
+        <button type="button" data-tab="receipt"><svg class="ai2"><use href="#a-doc"/></svg><span>Comprobantes</span></button>
+        <button type="button" data-more><i class="ai" style="--i:url(assets/adm/mas.svg)"></i><span>Más</span><b class="nbadge" id="memBadge" hidden></b></button>
+      </nav>
+    </div>
   </section>
   </div>
 </main>
@@ -400,6 +408,28 @@
     <div class="mv-thumbs" id="mvThumbs"></div>
     <div class="mv-foot"><span class="likes"><svg><use href="#i-heart"/></svg><b id="mvLikes">0</b></span><button type="button" class="love" id="mvLove"><svg><use href="#i-heart"/></svg>Me encanta</button></div>
   </div>
+</dialog>
+
+<!-- Menú «Más» de administración -->
+<dialog id="admMore" class="sheet small adm-sheet" aria-label="Más opciones">
+  <div class="sheet-body">
+    <h3>Más opciones</h3>
+    <div class="more-grid">
+      <button type="button" data-go="plans"><img src="assets/adm/planes_precios.svg" alt=""><span>Planes y precios</span></button>
+      <button type="button" data-go="memories"><img src="assets/adm/fotos_mural.svg" alt=""><span>Fotos y mural</span></button>
+      <button type="button" data-go="backup"><img src="assets/adm/respaldo.svg" alt=""><span>Respaldo</span></button>
+      <button type="button" data-go="pending"><img src="assets/adm/datos_pendientes.svg" alt=""><span>Datos pendientes</span></button>
+      <button type="button" data-go="config"><img src="assets/adm/configuracion.svg" alt=""><span>Configuración</span></button>
+      <a href="#inicio" data-close><img src="assets/adm/calendario.svg" alt=""><span>Ver sitio público</span></a>
+    </div>
+    <button type="button" class="btn2 ghost full" id="logout">Cerrar sesión</button>
+  </div>
+</dialog>
+
+<!-- Detalle de día (calendario admin) -->
+<dialog id="admDay" class="sheet small adm-sheet" aria-labelledby="adTitle">
+  <button class="v-close dark" data-close aria-label="Cerrar">✕</button>
+  <div class="sheet-body" id="adDayBody"></div>
 </dialog>
 
 <!-- Selector de fecha (calendario) -->

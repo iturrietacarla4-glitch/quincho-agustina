@@ -373,8 +373,14 @@ function contact(){
 }
 
 /* ---------- Panel admin (demo) ---------- */
-let tab = 'receipt';
-document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; renderAdmin(); }));
+let tab = 'home';
+const admGo = t => { tab = t; renderAdmin(); window.scrollTo({top:0, behavior:'smooth'}); };
+document.addEventListener('click', e => {
+  if (!e.target.closest('#adminPanel, #admMore, #admDay')) return;
+  const t = e.target.closest('[data-tab]'); if (t){ e.preventDefault(); if (t.dataset.tab === 'requests') reqF = t.dataset.rf0 || 'pendiente'; admGo(t.dataset.tab); return; }
+  if (e.target.closest('[data-more]')){ openDlg($('admMore')); return; }
+  const g = e.target.closest('[data-go]'); if (g){ closeDlg($('admMore')); admGo(g.dataset.go); }
+});
 function pendingFields(){
   const N = D.negocio, out = [];
   out.push('Pin exacto de Google Maps (ahora busca «El Manzano, Las Dichas, Casablanca»)');
@@ -384,10 +390,15 @@ function pendingFields(){
   return out;
 }
 function renderAdmin(){
-  document.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-selected', b.dataset.tab === tab); });
-  const c = $('adminContent');
+  if (tab === 'dates') tab = 'cal';
+  const inMore = ['plans','memories','backup','pending','config','photos'].includes(tab);
+  document.querySelectorAll('.adm-nav button').forEach(b => { const on = b.dataset.tab ? b.dataset.tab === tab : inMore; b.classList.toggle('on', on); on ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'); });
+  const c = $('adminContent'); c.className = 'adm-view v-' + tab;
+  if (tab === 'home'){ adminHome(c); return; }
   if (tab === 'receipt'){ receiptForm(c); return; }
-  if (SB && ADMIN && tab === 'dates'){ sbDates(c); return; }
+  if (tab === 'plans'){ adminPlans(c); return; }
+  if (tab === 'config'){ adminConfig(c); return; }
+  if (tab === 'cal'){ if (SB && ADMIN) { adminCal(c); return; } tab = 'dates'; }
   if (SB && ADMIN && tab === 'requests'){ sbRequests(c); return; }
   if (tab === 'dates'){
     c.innerHTML = `<h3>Habilitar o bloquear fechas</h3><p class="muted">Por defecto los días están disponibles; las fechas reservadas vienen de <code>data.js</code>. Aquí puedes ajustar días puntuales (solo en este navegador).</p>
@@ -533,7 +544,7 @@ function receiptForm(c){
     $('rAbonos').querySelectorAll('[data-del-ab]').forEach(b => b.onclick = () => { rcpt.abonos.splice(+b.dataset.delAb,1); drawAb(); rSum(); });
   };
   $('rAddAb').onclick = () => { rcpt.abonos.push({fecha:iso(today), monto:'', medio:''}); drawAb(); };
-  drawAb(); rSum(); planEditor(); recentAccepted();
+  drawAb(); rSum(); planEditor($('rPlanes'), () => { receiptForm($('adminContent')); const d = document.querySelector('.planed'); if (d) d.open = true; }); recentAccepted();
   $('rGen').onclick = async () => {
     if (!rcpt.cliente.trim() || !rcpt.fecha) { toast('Completa al menos el cliente y la fecha.'); (!rcpt.cliente.trim() ? $('rCliente') : $('rFecha')).focus(); return; }
     $('rGen').disabled = true; $('rGen').textContent = 'Generando…';
@@ -579,8 +590,8 @@ function prefillReceipt(r){
   const p = $('rPlan'); if (p) p.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-function planEditor(){
-  const box = $('rPlanes'); if (!box) return;
+function planEditor(box, rerender){
+  if (!box) return;
   const rows = (list, key) => list.map((p,i) => `<div class="prow"><input data-pk="${key}" data-i="${i}" data-f="nombre" value="${esc(p.nombre)}" aria-label="Nombre" maxlength="50">
       <select data-pk="${key}" data-i="${i}" data-f="tipo" aria-label="Tipo de precio">${Object.entries(TIPO).filter(([k]) => key === 'extras' || k !== 'unidad').map(([k,v]) => `<option value="${k}" ${p.tipo===k?'selected':''}>${v}</option>`).join('')}</select>
       <input type="number" min="0" step="500" inputmode="numeric" data-pk="${key}" data-i="${i}" data-f="precio" value="${esc(p.precio)}" placeholder="Precio CLP" aria-label="Precio">
@@ -593,7 +604,6 @@ function planEditor(){
   box.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { PL[b.dataset.pdel].splice(+b.dataset.i,1); savePL(); rerender(); });
   box.querySelectorAll('[data-padd]').forEach(b => b.onclick = () => { PL[b.dataset.padd].push({nombre:'Nuevo', tipo:'fijo', precio:''}); rerender(); });
   $('pSave').onclick = () => { savePL(); toast('Planes guardados en este dispositivo ✔'); rerender(); };
-  function rerender(){ const open = true; receiptForm($('adminContent')); const d = document.querySelector('.planed'); if (d) d.open = open; }
 }
 const abTotal = r => r.abonos.reduce((s,a) => s + (Number(a.monto)||0), 0);
 function rSum(){
@@ -685,8 +695,8 @@ const sbReady = new Promise(res => {
 });
 function admWarn(){
   const el = $('admWarn'); if (!el) return;
-  if (SB && ADMIN){ el.className = 'warning ok'; el.innerHTML = '✔ <b>Conectado a la base de datos.</b> Solicitudes, fechas, recuerdos y respaldo se guardan en línea y se ven en todos los teléfonos. Solo «Mis planes y precios» del comprobante se guarda en este dispositivo.'; }
-  else { el.className = 'warning bad'; el.innerHTML = '⚠ <b>Modo local, sin conexión a la base de datos.</b> Los cambios de esta sesión quedan solo en este teléfono. Cierra sesión, recarga la página y vuelve a entrar con tu clave de Supabase.'; }
+  if (SB && ADMIN){ el.className = 'adm-warn ok'; el.innerHTML = `<span class="dotl"></span><span><b>En línea.</b> Solicitudes, fechas, mural y respaldo se guardan en la base de datos. «Planes y precios» queda solo en este dispositivo.</span>`; }
+  else { el.className = 'adm-warn bad'; el.innerHTML = `<span class="dotl"></span><span><b>Modo local.</b> Los cambios quedan solo en este navegador y no se sincronizan con otros teléfonos.</span>`; }
 }
 function sbStatus(){
   const el = $('sbStat'); if (!el) return;
@@ -714,42 +724,6 @@ async function sbAdminName(){
   return data ? data.nombre : '';
 }
 const ESTADOS = { pendiente:'🕒 Pendiente', aceptada:'✅ Aceptada', rechazada:'❌ Rechazada', cotizada:'💬 Cotizada' };
-async function sbRequests(c){
-  c.innerHTML = '<h3>Solicitudes</h3><p class="muted">Cargando…</p>';
-  const { data, error } = await SB.from('solicitudes').select('*').order('creado', {ascending:false}).limit(300);
-  if (error) { c.innerHTML = '<h3>Solicitudes</h3><p class="muted">No se pudieron cargar. Revisa tu conexión.</p>'; return; }
-  const filtro = c.dataset.f || 'pendiente';
-  const list = data.filter(r => filtro === 'todas' || r.estado === filtro);
-  const count = k => data.filter(r => k === 'todas' || r.estado === k).length;
-  c.innerHTML = `<h3>Solicitudes</h3>
-    <div class="filters" style="margin:0 0 10px">${['pendiente','aceptada','cotizada','rechazada','todas'].map(k => `<button type="button" data-sf="${k}" aria-pressed="${k===filtro}">${k==='todas'?'Todas':ESTADOS[k]} (${count(k)})</button>`).join('')}</div>` +
-    (list.length ? list.map(r => `<div class="adminRow sreq"><div>
-        <b>${esc(r.nombre)}</b> <span class="pend">${r.tipo === 'evento' ? 'Cotización evento' : 'Reserva'}</span>
-        <p class="tiny">📅 <b>${esc(fmtDate(r.fecha))}</b> · ${esc(r.actividad || '')} · ${r.personas ? esc(r.personas) + ' personas' : ''}${r.servicios ? '<br>Servicios: ' + esc(r.servicios) : ''}${r.observaciones ? '<br>💬 ' + esc(r.observaciones) : ''}
-        <br><a href="https://wa.me/${esc(r.telefono.replace(/\D/g,''))}" target="_blank" rel="noopener"><b>💬 ${esc(r.telefono)}</b></a> · ${ESTADOS[r.estado] || esc(r.estado)}${r.gestionado_por ? ' por ' + esc(r.gestionado_por) : ''} · recibida ${esc(new Date(r.creado).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}))}</p></div>
-        <div>${r.estado !== 'aceptada' ? `<button class="mini" data-sid="${r.id}" data-sa="aceptada">Aceptar y bloquear fecha</button>` : ''}${r.estado === 'pendiente' ? `<button class="mini" data-sid="${r.id}" data-sa="cotizada">Cotizada</button><button class="mini danger" data-sid="${r.id}" data-sa="rechazada">Rechazar</button>` : ''}${r.estado === 'aceptada' ? `<button class="mini" data-rc="${r.id}">🧾 Comprobante</button>` : ''}<button class="mini danger" data-sid="${r.id}" data-sa="borrar">Eliminar</button></div></div>`).join('')
-      : '<p class="muted">No hay solicitudes en esta lista.</p>');
-  c.querySelectorAll('[data-sf]').forEach(b => b.onclick = () => { c.dataset.f = b.dataset.sf; sbRequests(c); });
-  c.querySelectorAll('[data-rc]').forEach(b => b.onclick = () => { const r = data.find(x => x.id === b.dataset.rc); if (r) prefillReceipt(normReq(r)); });
-  c.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => {
-    const r = data.find(x => x.id === b.dataset.sid); if (!r) return; const act = b.dataset.sa;
-    const run = async () => {
-      let err;
-      if (act === 'borrar') ({ error: err } = await SB.from('solicitudes').delete().eq('id', r.id));
-      else {
-        ({ error: err } = await SB.from('solicitudes').update({ estado: act, gestionado_por: ADMIN }).eq('id', r.id));
-        if (!err && act === 'aceptada') { const x = await SB.from('fechas_bloqueadas').upsert({ fecha: r.fecha, solicitud: r.id }); err = x.error; if (!err) { RESERVADAS.add(r.fecha); calendar(); homeCal(); } }
-      }
-      toast(err ? 'No se pudo guardar: ' + err.message : (act === 'aceptada' ? 'Aceptada: la fecha quedó bloqueada ✔' : 'Listo ✔'));
-      sbRequests(c);
-      if (!err && act === 'aceptada') setTimeout(() => modal({ title:'Reserva aceptada ✔', text:`${r.nombre} · ${fmtDate(r.fecha)}. ¿Quieres guardar ahora el Excel de respaldo actualizado?`,
-        actions:[ {label:'Ahora no'}, {label:'Guardar Excel', cls:'pink', onClick: async () => { try { const x = await shareOrDownload(await excelBackup()); if (x !== 'cancel') toast('Respaldo guardado ✔'); } catch (e2) { toast(e2.message); } }} ] }), 400);
-    };
-    if (act === 'aceptada') confirmBox('¿Aceptar la solicitud?', `Se bloqueará el ${fmtDate(r.fecha)} en la página para todos.`, run);
-    else if (act === 'borrar') confirmBox('¿Eliminar la solicitud?', 'Se borrará de forma permanente.', run);
-    else run();
-  });
-}
 async function sbDates(c){
   c.innerHTML = '<h3>Fechas bloqueadas</h3><p class="muted">Cargando…</p>';
   const { data, error } = await SB.from('fechas_bloqueadas').select('fecha').order('fecha');
@@ -1076,6 +1050,202 @@ async function backupAdmin(c){
     }); });
 }
 
+
+/* =====================================================================
+   Panel de administración (dashboard móvil)
+   ===================================================================== */
+const ADM = { sol: [], fechas: [], loaded: 0 };
+const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+async function admLoad(force){
+  if (!(SB && ADMIN)) { ADM.sol = db.requests.map(r => ({ id:String(r.id), nombre:r.name, fecha:r.date, actividad:r.detail, personas:r.count, telefono:r.phone, estado:({Pendiente:'pendiente', Confirmado:'aceptada', Rechazado:'rechazada', Cotizado:'cotizada'})[r.status] || 'pendiente', creado:new Date(r.id).toISOString(), tipo:r.kind === 'Evento' ? 'evento' : 'reserva', observaciones:r.note, local:true })); ADM.fechas = Object.entries(db.days).filter(([,s]) => s === 'booked').map(([f]) => ({ fecha:f })); return ADM; }
+  if (!force && Date.now() - ADM.loaded < 4000) return ADM;
+  const [s, f] = await Promise.all([ SB.from('solicitudes').select('*').order('creado', {ascending:false}).limit(500), SB.from('fechas_bloqueadas').select('*').order('fecha') ]);
+  if (s.error) throw s.error; if (f.error) throw f.error;
+  ADM.sol = s.data; ADM.fechas = f.data; ADM.loaded = Date.now();
+  f.data.forEach(x => RESERVADAS.add(x.fecha));
+  const n = s.data.filter(r => r.estado === 'pendiente').length; $('reqBadge').hidden = !n; $('reqBadge').textContent = n;
+  return ADM;
+}
+const actFoto = t => { t = (t || '').toLowerCase(); return /cumple/.test(t) ? 'assets/cumple-almuerzo.jpg' : /curso|colegio|jard/.test(t) ? 'assets/juegos-piscina.jpg' : /empresa|privad|instituc/.test(t) ? 'assets/salon-montaje.jpg' : /matrimon|boda/.test(t) ? 'assets/matrimonio-entrada.jpg' : /gradua|gala/.test(t) ? 'assets/graduacion-baile.jpg' : /famil|piscina/.test(t) ? 'assets/piscina.jpg' : 'assets/evento-noche.jpg'; };
+const EST = { pendiente:['Pendiente','pk'], aceptada:['Confirmada','gr'], rechazada:['Rechazada','gy'], cotizada:['Cotizada','bl'] };
+const fShortD = f => { const [y,m,d] = f.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-CL',{weekday:'short', day:'numeric', month:'short', year:'numeric'}); };
+const waNum = t => 'https://wa.me/' + String(t || '').replace(/\D/g,'');
+function reqCard(r){
+  const [et, ec] = EST[r.estado] || [r.estado, 'gy'];
+  return `<article class="rq" data-rid="${esc(r.id)}">
+    <img class="rq-ph" src="${actFoto(r.actividad + ' ' + r.tipo)}" alt="" loading="lazy">
+    <div class="rq-b">
+      <div class="rq-top"><b>${esc(r.actividad || (r.tipo === 'evento' ? 'Evento' : 'Reserva'))}</b><span class="st ${ec}">${et}</span></div>
+      <p class="rq-m"><svg><use href="#m-cal"/></svg>${esc(fShortD(r.fecha))}${r.personas ? ` · ${esc(r.personas)} personas` : ''}</p>
+      <p class="rq-c">${esc(r.nombre)}</p>
+      <div class="rq-act">
+        ${r.estado !== 'aceptada' ? `<button type="button" class="ra ok" data-ra="aceptada"><svg><use href="#i-check"/></svg>Aceptar</button>` : ''}
+        ${r.estado === 'pendiente' ? `<button type="button" class="ra no" data-ra="rechazada">✕ Rechazar</button><button type="button" class="ra bl" data-ra="cotizada">Cotizada</button>` : ''}
+        ${r.telefono && !r.local ? `<a class="ra wa" href="${esc(waNum(r.telefono))}" target="_blank" rel="noopener"><svg><use href="#m-wa"/></svg>WhatsApp</a>` : ''}
+        <button type="button" class="ra more" data-ra="detalle" aria-label="Ver detalles">›</button>
+      </div>
+    </div></article>`;
+}
+async function reqAction(rid, act, after){
+  const r = ADM.sol.find(x => String(x.id) === String(rid)); if (!r) return;
+  if (act === 'detalle') return reqDetail(r, after);
+  if (r.local){ const L = db.requests.find(x => String(x.id) === rid); if (L){ L.status = ({aceptada:'Confirmado', rechazada:'Rechazado', cotizada:'Cotizado'})[act]; if (act === 'aceptada') db.days[L.date] = 'booked'; save(); calendar(); } toast('Guardado en este navegador'); return after(); }
+  const run = async () => {
+    if (act === 'aceptada'){
+      const { data: ocup } = await SB.from('fechas_bloqueadas').select('fecha,solicitud').eq('fecha', r.fecha);
+      const otra = ADM.sol.find(x => x.id !== r.id && x.fecha === r.fecha && x.estado === 'aceptada');
+      if ((ocup && ocup.length && ocup[0].solicitud !== r.id) || otra) return modal({ title:'Fecha ocupada', text:`El ${fmtDate(r.fecha)} ya tiene una reserva${otra ? ' confirmada de ' + otra.nombre : ' o está bloqueado'}. No se puede aceptar otra para el mismo día. Si corresponde, desbloquea la fecha primero en Calendario.`, actions:[{label:'Entendido', cls:'pink'}] });
+    }
+    let { error } = await SB.from('solicitudes').update({ estado: act, gestionado_por: ADMIN }).eq('id', r.id);
+    if (!error && act === 'aceptada'){ const x = await SB.from('fechas_bloqueadas').upsert({ fecha: r.fecha, solicitud: r.id }); error = x.error; if (!error) { RESERVADAS.add(r.fecha); calendar(); homeCal(); } }
+    toast(error ? 'No se pudo guardar: ' + error.message : ({aceptada:'Aceptada: la fecha quedó bloqueada ✔', rechazada:'Solicitud rechazada', cotizada:'Marcada como cotizada'})[act]);
+    await admLoad(true); after();
+    if (!error && act === 'aceptada') setTimeout(() => modal({ title:'Reserva aceptada ✔', text:`${r.nombre} · ${fmtDate(r.fecha)}. ¿Quieres guardar ahora el Excel de respaldo actualizado?`,
+      actions:[ {label:'Ahora no'}, {label:'Guardar Excel', cls:'pink', onClick: async () => { try { const x = await shareOrDownload(await excelBackup()); if (x !== 'cancel') toast('Respaldo guardado ✔'); } catch (e2) { toast(e2.message); } }} ] }), 400);
+  };
+  if (act === 'aceptada') confirmBox('¿Aceptar la solicitud?', `Se bloqueará el ${fmtDate(r.fecha)} para ${r.nombre}.`, run);
+  else if (act === 'rechazada') confirmBox('¿Rechazar la solicitud?', `${r.nombre} · ${fmtDate(r.fecha)}. Recuerda avisarle por WhatsApp.`, run);
+  else run();
+}
+function reqDetail(r, after){
+  const [et, ec] = EST[r.estado] || [r.estado, 'gy'];
+  $('adDayBody').innerHTML = `<h3 id="adTitle">${esc(r.nombre)}</h3><span class="st ${ec}">${et}</span>
+    <dl class="rz-sum" style="margin-top:12px"><dt>📅 Fecha</dt><dd>${esc(fmtDate(r.fecha))}</dd><dt>🎉 Actividad</dt><dd>${esc(r.actividad || '—')}</dd><dt>👥 Personas</dt><dd>${esc(r.personas || '—')}</dd>
+    <dt>📱 WhatsApp</dt><dd>${esc(r.telefono || '—')}</dd>${r.servicios ? `<dt>✨ Servicios</dt><dd>${esc(r.servicios)}</dd>` : ''}${r.observaciones ? `<dt>💬 Notas</dt><dd>${esc(r.observaciones)}</dd>` : ''}
+    <dt>🕒 Recibida</dt><dd>${esc(fmtTS(r.creado))}</dd>${r.gestionado_por ? `<dt>👤 Gestionó</dt><dd>${esc(r.gestionado_por)}</dd>` : ''}</dl>
+    <div class="rq-act" style="margin-top:14px">${r.estado === 'aceptada' ? `<button type="button" class="ra ok" data-rcp="${esc(r.id)}">🧾 Comprobante</button>` : ''}${r.telefono && !r.local ? `<a class="ra wa" href="${esc(waNum(r.telefono))}" target="_blank" rel="noopener"><svg><use href="#m-wa"/></svg>WhatsApp</a>` : ''}${!r.local ? `<button type="button" class="ra no" data-rdel="${esc(r.id)}">Eliminar</button>` : ''}</div>`;
+  openDlg($('admDay'));
+  const cp = $('adDayBody').querySelector('[data-rcp]'); if (cp) cp.onclick = () => { closeDlg($('admDay')); prefillReceipt(normReq(r)); };
+  const dl = $('adDayBody').querySelector('[data-rdel]'); if (dl) dl.onclick = () => { closeDlg($('admDay')); confirmBox('¿Eliminar la solicitud?', 'Quedará registrada en Respaldo y se puede restaurar.', async () => { const { error } = await SB.from('solicitudes').delete().eq('id', r.id); toast(error ? 'No se pudo: ' + error.message : 'Eliminada (recuperable en Respaldo)'); await admLoad(true); after(); }); };
+}
+function bindReq(root, after){ root.querySelectorAll('[data-ra]').forEach(b => b.onclick = () => reqAction(b.closest('[data-rid]').dataset.rid, b.dataset.ra, after)); }
+const admErr = (c, e) => { c.innerHTML = `<p class="mem-err">No se pudieron cargar los datos. Revisa tu conexión e inténtalo de nuevo.<br><small>${esc(e && e.message || '')}</small></p><button class="btn2 ghost" type="button" onclick="location.reload()">Reintentar</button>`; };
+
+/* --- Inicio --- */
+async function adminHome(c){
+  c.innerHTML = '<div class="kpis">' + '<div class="kpi skel"></div>'.repeat(4) + '</div>';
+  let A; try { A = await admLoad(); } catch (e) { return admErr(c, e); }
+  const hoy = iso(today), mes = hoy.slice(0,7), en30 = iso(new Date(today.getTime() + 30*864e5));
+  const pend = A.sol.filter(r => r.estado === 'pendiente').length;
+  const conf = A.sol.filter(r => r.estado === 'aceptada' && r.fecha >= hoy).length;
+  const prox = A.fechas.filter(x => x.fecha >= hoy && x.fecha <= en30).length;
+  const delMes = A.fechas.filter(x => x.fecha.slice(0,7) === mes).length;
+  const K = (n, l, s, ico, cls, go) => `<button type="button" class="kpi ${cls}" data-tab="${go}"><span class="k-top"><svg class="ai2"><use href="#${ico}"/></svg><span class="k-go">›</span></span><b>${n}</b><span class="k-l">${l}</span><small>${s}</small></button>`;
+  const T = (go, ico, l, badge) => `<button type="button" class="tile2" data-${go.startsWith('#') ? 'x' : 'tab'}="${go}"><span class="tw"><img src="assets/adm/${ico}.svg" alt="">${badge ? `<b class="nbadge">${badge}</b>` : ''}</span><span>${l}</span></button>`;
+  const rec = A.sol.filter(r => r.estado === 'pendiente' || r.estado === 'cotizada').slice(0, 3);
+  const nextF = A.fechas.filter(x => x.fecha >= hoy).slice(0, 4);
+  const mon = f => { const [y,m,d] = f.split('-').map(Number); const dt = new Date(y,m-1,d); return `<b>${String(d).padStart(2,'0')}</b><span>${dt.toLocaleDateString('es-CL',{month:'short'}).replace('.','').toUpperCase()}</span><small>${y}</small>`; };
+  c.innerHTML = `<div class="kpis">
+      ${K(pend, 'Solicitudes', 'pendientes', 'a-req', 'k-pk', 'requests')}
+      ${K(conf, 'Reservas', 'confirmadas próximas', 'a-ok', 'k-gr', 'requests" data-rf0="aceptada')}
+      ${K(prox, 'Próximos eventos', 'en los próximos 30 días', 'm-cal', 'k-bl', 'cal')}
+      ${K(delMes, 'Total', 'reservas este mes', 'm-users', 'k-yl', 'cal')}
+    </div>
+    <section class="adm-card"><div class="tiles2">
+      ${T('requests','solicitudes','Solicitudes', pend)}${T('cal','calendario','Calendario')}${T('plans','planes_precios','Planes y precios')}${T('memories','fotos_mural','Fotos y mural')}
+      ${T('receipt','comprobantes','Comprobantes')}${T('backup','respaldo','Respaldo')}${T('pending','datos_pendientes','Datos pendientes')}${T('config','configuracion','Configuración')}
+    </div></section>
+    <section class="adm-card"><div class="ac-h"><h3>Solicitudes recientes</h3><button type="button" class="lnk" data-tab="requests">Ver todas</button></div>
+      <div class="rqs" id="homeReq">${rec.length ? rec.map(reqCard).join('') : '<p class="muted ac-empty">No hay solicitudes pendientes 🎉</p>'}</div></section>
+    <section class="adm-card"><div class="ac-h"><h3>Fechas bloqueadas</h3><button type="button" class="chip-btn" data-tab="cal">+ Bloquear fecha</button></div>
+      <div class="fchips">${nextF.map(x => `<button type="button" class="fchip" data-day="${x.fecha}" aria-label="${esc(fmtDate(x.fecha))}">${mon(x.fecha)}<i aria-hidden="true">🔒</i></button>`).join('')}<button type="button" class="fchip add" data-tab="cal"><span>＋</span>Agregar</button></div></section>`;
+  bindReq(c, () => adminHome(c));
+  c.querySelectorAll('[data-day]').forEach(b => b.onclick = () => dayDetail(b.dataset.day, () => adminHome(c)));
+  memBadge();
+}
+
+/* --- Solicitudes --- */
+let reqF = 'pendiente';
+async function sbRequests(c){
+  c.innerHTML = '<div class="mem-skel"></div><div class="mem-skel"></div>';
+  let A; try { A = await admLoad(); } catch (e) { return admErr(c, e); }
+  const cnt = k => A.sol.filter(r => k === 'todas' || r.estado === k).length;
+  const list = A.sol.filter(r => reqF === 'todas' || r.estado === reqF).sort((a,b) => reqF === 'pendiente' ? a.fecha.localeCompare(b.fecha) : 0);
+  c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Solicitudes</h3></div>
+    <div class="segs" role="tablist">${[['pendiente','Pendientes'],['cotizada','Cotizadas'],['aceptada','Confirmadas'],['rechazada','Rechazadas'],['todas','Todas']].map(([k,v]) => `<button type="button" data-rf="${k}" aria-pressed="${k===reqF}">${v}<b>${cnt(k)}</b></button>`).join('')}</div>
+    <div class="rqs">${list.length ? list.map(reqCard).join('') : '<p class="muted ac-empty">No hay solicitudes en esta lista.</p>'}</div>`;
+  c.querySelectorAll('[data-rf]').forEach(b => b.onclick = () => { reqF = b.dataset.rf; sbRequests(c); });
+  bindReq(c, () => sbRequests(c));
+}
+
+/* --- Calendario --- */
+let admShown = new Date(today.getFullYear(), today.getMonth(), 1);
+function dayState(k){
+  const f = ADM.fechas.find(x => x.fecha === k), conf = ADM.sol.find(r => r.fecha === k && r.estado === 'aceptada');
+  const pend = ADM.sol.filter(r => r.fecha === k && (r.estado === 'pendiente' || r.estado === 'cotizada'));
+  if (conf || (f && f.solicitud)) return { s:'conf', f, conf: conf || ADM.sol.find(r => r.id === (f && f.solicitud)), pend };
+  if (f) return { s:'blk', f, pend };
+  if (pend.length) return { s:'pend', pend };
+  return { s:'free', pend:[] };
+}
+async function adminCal(c){
+  c.innerHTML = '<div class="mem-skel" style="height:360px"></div>';
+  try { await admLoad(); } catch (e) { return admErr(c, e); }
+  const m = admShown.toLocaleDateString('es-CL',{month:'long', year:'numeric'});
+  const start = (admShown.getDay()+6)%7, days = new Date(admShown.getFullYear(), admShown.getMonth()+1, 0).getDate();
+  let cells = '<span></span>'.repeat(start);
+  for (let n = 1; n <= days; n++){ const d = new Date(admShown.getFullYear(), admShown.getMonth(), n), k = iso(d), st = dayState(k);
+    cells += `<button type="button" class="ad ${st.s}${+d === +today ? ' today' : ''}${d < today ? ' past' : ''}" data-day="${k}" aria-label="${esc(fmtDate(k))}: ${({free:'disponible', blk:'bloqueada', pend:'solicitud pendiente', conf:'reserva confirmada'})[st.s]}">${n}${st.pend.length && st.s !== 'pend' ? '<i></i>' : ''}</button>`; }
+  c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Calendario</h3></div>
+    <section class="adm-card"><div class="cal-head"><button type="button" class="icon-btn" id="acPrev" aria-label="Mes anterior">‹</button><strong>${m.charAt(0).toUpperCase() + m.slice(1)}</strong><button type="button" class="icon-btn" id="acNext" aria-label="Mes siguiente">›</button></div>
+      <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+      <div class="adcal">${cells}</div>
+      <div class="adleg"><span><i class="free"></i>Disponible</span><span><i class="blk"></i>Bloqueada</span><span><i class="pend"></i>Solicitud pendiente</span><span><i class="conf"></i>Reserva confirmada</span></div>
+      <p class="tiny">Toca un día para ver el detalle, bloquearlo o desbloquearlo.</p></section>`;
+  $('acPrev').onclick = () => { admShown.setMonth(admShown.getMonth()-1); adminCal(c); };
+  $('acNext').onclick = () => { admShown.setMonth(admShown.getMonth()+1); adminCal(c); };
+  c.querySelectorAll('[data-day]').forEach(b => b.onclick = () => dayDetail(b.dataset.day, () => adminCal(c)));
+}
+function dayDetail(k, after){
+  const st = dayState(k), lbl = ({free:['Disponible','gr'], blk:['Bloqueada','gy'], pend:['Solicitud pendiente','pk'], conf:['Reserva confirmada','bl']})[st.s];
+  const past = k < iso(today);
+  $('adDayBody').innerHTML = `<h3 id="adTitle">${esc(fmtDate(k))}</h3><span class="st ${lbl[1]}">${lbl[0]}</span>
+    ${st.conf ? `<div class="dd-box"><b>${esc(st.conf.nombre)}</b><span>${esc(st.conf.actividad || '')}${st.conf.personas ? ' · ' + esc(st.conf.personas) + ' personas' : ''}</span>${st.conf.telefono ? `<a class="ra wa" href="${esc(waNum(st.conf.telefono))}" target="_blank" rel="noopener"><svg><use href="#m-wa"/></svg>WhatsApp</a>` : ''}</div>` : ''}
+    ${st.s === 'blk' ? `<div class="dd-box"><b>Motivo</b><span>${esc((st.f && st.f.motivo) || 'Reserva registrada en la agenda')}</span></div>` : ''}
+    ${st.pend.length ? `<h4 class="dd-h">Solicitudes para este día</h4><div class="rqs">${st.pend.map(reqCard).join('')}</div>` : ''}
+    ${st.s === 'free' && !past ? `<label class="dd-mot">Motivo del bloqueo (opcional)<input id="ddMot" maxlength="120" placeholder="Ej: mantención, evento propio, reserva por teléfono"></label><button type="button" class="btn2 primary full" id="ddBlock"><svg><use href="#m-cal"/></svg>Bloquear fecha</button>` : ''}
+    ${(st.s === 'blk' || st.s === 'conf') && !past ? `<button type="button" class="btn2 ghost full" id="ddUnblock">Desbloquear fecha</button>` : ''}`;
+  openDlg($('admDay'));
+  bindReq($('adDayBody'), () => { closeDlg($('admDay')); after(); });
+  const b1 = $('ddBlock'); if (b1) b1.onclick = () => { const mot = $('ddMot').value.trim(); closeDlg($('admDay'));
+    confirmBox('¿Bloquear esta fecha?', `${fmtDate(k)} aparecerá como reservada en la página.`, async () => {
+      let { error } = await SB.from('fechas_bloqueadas').upsert(mot ? { fecha:k, motivo:mot } : { fecha:k });
+      if (error && /motivo/i.test(error.message)) { ({ error } = await SB.from('fechas_bloqueadas').upsert({ fecha:k })); if (!error) toast('Bloqueada. Para guardar el motivo, ejecuta supabase_admin.sql.'); }
+      else toast(error ? 'No se pudo: ' + error.message : 'Fecha bloqueada ✔');
+      if (!error) { RESERVADAS.add(k); calendar(); homeCal(); } await admLoad(true); after(); }); };
+  const b2 = $('ddUnblock'); if (b2) b2.onclick = () => { closeDlg($('admDay'));
+    confirmBox('¿Desbloquear esta fecha?', `${fmtDate(k)} volverá a aparecer disponible${st.conf ? '. La reserva de ' + st.conf.nombre + ' seguirá registrada como confirmada' : ''}. Queda registrado en Respaldo.`, async () => {
+      const { error } = await SB.from('fechas_bloqueadas').delete().eq('fecha', k);
+      if (!error) { RESERVADAS.delete(k); calendar(); homeCal(); } toast(error ? 'No se pudo: ' + error.message : 'Fecha desbloqueada (recuperable en Respaldo)'); await admLoad(true); after(); }); };
+}
+
+/* --- Planes y precios / Configuración --- */
+function adminPlans(c){
+  c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Planes y precios</h3></div>
+    <div class="adm-warn bad"><span class="dotl"></span><span>Estos precios se guardan <b>solo en este dispositivo</b> y no se publican. Se usan para calcular los comprobantes.</span></div>
+    <section class="adm-card"><div id="rPlanes"></div></section>`;
+  planEditor($('rPlanes'), () => adminPlans(c));
+}
+function adminConfig(c){
+  const ok = !!(SB && ADMIN);
+  c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Configuración</h3></div>
+    <section class="adm-card cfg"><div class="cfg-row"><span>Sesión</span><b>${esc(ADMIN || who() || '—')}</b></div>
+      <div class="cfg-row"><span>Base de datos</span><b class="${ok ? 'okc2' : 'bad2'}">${ok ? '✔ Conectada (Supabase)' : '✖ Sin conexión'}</b></div>
+      <div class="cfg-row"><span>Clave</span><b>Se cambia en Supabase → Authentication → Users</b></div></section>
+    <section class="adm-card"><h4 class="dd-h">Dónde se guarda cada cosa</h4>
+      <div class="cfg-t">
+        <div><span>Solicitudes y reservas</span><b class="${ok ? 'okc2' : 'bad2'}">${ok ? 'Base de datos' : 'Este navegador'}</b></div>
+        <div><span>Fechas bloqueadas</span><b class="${ok ? 'okc2' : 'bad2'}">${ok ? 'Base de datos' : 'Este navegador'}</b></div>
+        <div><span>Mural y fotos de visitantes</span><b class="${ok ? 'okc2' : 'bad2'}">${ok ? 'Base de datos + Storage' : 'Solo demostración'}</b></div>
+        <div><span>Historial y Excel de respaldo</span><b class="${ok ? 'okc2' : 'bad2'}">${ok ? 'Base de datos' : 'No disponible'}</b></div>
+        <div><span>Planes y precios</span><b class="bad2">Este dispositivo</b></div>
+        <div><span>Comprobantes emitidos</span><b class="bad2">No se guardan (se generan al momento)</b></div>
+        <div><span>Galería del sitio (fotos)</span><b class="bad2">Archivos del sitio · cambios vía FLUVA</b></div>
+      </div></section>
+    <section class="adm-card cfg-acts"><a class="btn2 ghost full" href="#inicio">Ver sitio público</a><button type="button" class="btn2 ghost full" id="cfgOut">Cerrar sesión</button></section>`;
+  $('cfgOut').onclick = () => $('logout').click();
+}
+
 /* ---------- Pestañas (rutas por #hash) ---------- */
 const VIEWS = ['inicio','instalaciones','eventos','recuerdos','reservas','contacto','admin'];
 const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['recuerdos'], mural:['recuerdos'], disponibilidad:['inicio','disponibilidad'], main:['inicio'] };
@@ -1088,7 +1258,7 @@ function route(){
   document.body.dataset.view = v;
   $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', recuerdos:'Recuerdos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
-  if (v === 'admin') admWarn();
+  if (v === 'admin'){ admWarn(); $('admMsg').href = isMobileUA ? 'whatsapp://send' : 'https://web.whatsapp.com/'; }
   if (v === 'admin'){ const u = SB ? ADMIN : (SBC.url ? '' : who()); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); memBadge(); } }
   if (v === 'inicio') homeCal();
   revealAll();

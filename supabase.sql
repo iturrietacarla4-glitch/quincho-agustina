@@ -188,3 +188,6 @@ create trigger hist_fechas after insert or update or delete on public.fechas_blo
 -- Permite a administradores restaurar una solicitud borrada (con su estado original)
 drop policy if exists sol_admin_insert on public.solicitudes;
 create policy sol_admin_insert on public.solicitudes for insert to authenticated with check (public.es_admin());
+-- El Quincho de Agustina · Motivo de bloqueo de fechas (ejecutar una vez en SQL Editor)
+-- Solo agrega una columna opcional; no modifica ni borra datos existentes.
+alter table public.fechas_bloqueadas add column if not exists motivo text check (char_length(motivo) <= 120);
