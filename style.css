@@ -1074,3 +1074,4 @@ footer.sfoot .sf-in{text-align:center}
 .bklog small{display:block;color:var(--muted);font-size:11.5px}
 .bkdot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none;background:#1fae5b}
 .bkdot.UPDATE{background:#1f6fe0}.bkdot.DELETE{background:#e5484d}
+.warning.ok{background:#e6f8ec;color:#13563a}.warning.bad{background:#fff0f0;color:#8f1d33}

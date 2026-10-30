@@ -683,12 +683,17 @@ const sbReady = new Promise(res => {
   s.onerror = () => { window.SB_STATUS = 'offline'; sbStatus(); res(null); };
   document.head.append(s);
 });
+function admWarn(){
+  const el = $('admWarn'); if (!el) return;
+  if (SB && ADMIN){ el.className = 'warning ok'; el.innerHTML = '✔ <b>Conectado a la base de datos.</b> Solicitudes, fechas, recuerdos y respaldo se guardan en línea y se ven en todos los teléfonos. Solo «Mis planes y precios» del comprobante se guarda en este dispositivo.'; }
+  else { el.className = 'warning bad'; el.innerHTML = '⚠ <b>Modo local, sin conexión a la base de datos.</b> Los cambios de esta sesión quedan solo en este teléfono. Cierra sesión, recarga la página y vuelve a entrar con tu clave de Supabase.'; }
+}
 function sbStatus(){
   const el = $('sbStat'); if (!el) return;
   const s = window.SB_STATUS || (SBC.url ? 'checking' : 'off');
   const M = { ok:['ok','✔ Conectado a la base de datos'], nosql:['bad','✖ Falta ejecutar supabase.sql en Supabase'], offline:['bad','✖ No se pudo conectar con Supabase (modo local)'], off:['bad','Base de datos no configurada (modo local)'], checking:['wait','Conectando con la base de datos…'] };
   const [cls, txt] = M[s] || ['bad', '✖ ' + s.replace(/^error:/,'Error: ')];
-  el.className = 'sbstat ' + cls; el.textContent = txt;
+  el.className = 'sbstat ' + cls; el.textContent = txt; admWarn();
 }
 async function sbLoadDates(){
   if (!SB) return;
@@ -1083,7 +1088,8 @@ function route(){
   document.body.dataset.view = v;
   $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', recuerdos:'Recuerdos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
-  if (v === 'admin'){ const u = SB ? ADMIN : who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); memBadge(); } }
+  if (v === 'admin') admWarn();
+  if (v === 'admin'){ const u = SB ? ADMIN : (SBC.url ? '' : who()); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); memBadge(); } }
   if (v === 'inicio') homeCal();
   revealAll();
   if (anchor) requestAnimationFrame(() => $(anchor).scrollIntoView({block:'start'}));
@@ -1096,6 +1102,7 @@ $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (tries >= 5) { $('lMsg').textContent = 'Demasiados intentos. Recarga la página para intentar de nuevo.'; return; }
   await sbReady;
+  if (!SB && SBC.url){ $('lMsg').textContent = window.SB_STATUS === 'nosql' ? 'La base de datos no está lista. Avisa a FLUVA.' : 'No hay conexión con la base de datos. Revisa tu internet, recarga la página e inténtalo de nuevo.'; return; }
   if (SB){
     $('lMsg').textContent = 'Entrando…';
     const { error } = await SB.auth.signInWithPassword({ email: $('lUser').value.trim().toLowerCase(), password: $('lPin').value });
