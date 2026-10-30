@@ -1221,3 +1221,35 @@ body[data-view=admin] .admin-login{margin:24px auto}
 .segs button{flex-direction:column;gap:2px;padding:7px 2px;border-radius:14px;font-size:11px;line-height:1.1}
 .segs button b{font-size:13px;padding:0 8px}
 @media (max-width:340px){.segs button{font-size:10px}}
+
+/* Pagos */
+.pg-card{cursor:pointer}
+.pg-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.pg-sum>div{background:#f7f8fb;border-radius:14px;padding:10px;min-width:0}
+.pg-sum small{display:block;font-size:11.5px;color:#5d6b7a;font-weight:700;line-height:1.2}
+.pg-sum b{display:block;font-family:var(--head);font-size:clamp(15px,4.4vw,20px);color:var(--an);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-sum .ok{background:#e9fbf4}.pg-sum .ok b{color:#0f8a63}
+.pg-sum .due{background:#fff0f7}.pg-sum .due b{color:var(--af)}
+.pg-sum.big b{font-size:clamp(16px,5vw,24px)}
+.pgl{display:grid;gap:10px}
+.pgi{display:flex;gap:10px;align-items:stretch;text-align:left;border:0;background:#fff;border-radius:18px;padding:10px;box-shadow:0 4px 14px rgba(16,38,51,.05);width:100%}
+.pgi-d{flex:none;width:58px;border-radius:14px;background:#fff0f7;color:var(--af);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.pgi-d b{font-family:var(--head);font-size:22px}.pgi-d span{font-size:11px;font-weight:800}.pgi-d small{font-size:10px;opacity:.8}
+.pgi.done .pgi-d{background:#e9fbf4;color:#0f8a63}
+.pgi-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pgi-b>b{font-size:14.5px;color:var(--an);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgi-b>small{font-size:12px;color:#5d6b7a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar.sm{height:6px;margin:2px 0;background:#eef1f5}
+.pgi-n{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11.5px;color:#5d6b7a}
+.pgi-n b{color:var(--an)}.pgi-n .ok b{color:#0f8a63}.pgi-n .due b{color:var(--af)}
+.pg-form{gap:8px}
+.pg-form label{margin:6px 0!important}
+.sheet,.adm-sheet{max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.adm-sheet .v-close{position:sticky;top:10px;float:right;margin:10px 10px -54px 0}
+@media (max-width:480px){
+  .pg-sum{grid-template-columns:1fr;gap:6px}
+  .pg-sum>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px}
+  .pg-sum small{font-size:13px}
+  .pg-sum b,.pg-sum.big b{font-size:19px;overflow:visible}
+}
+@media (max-width:360px){.adm-nav button{font-size:9.5px;letter-spacing:-.2px}.adm-nav .ai,.adm-nav .ai2{width:23px;height:23px}}
