@@ -419,6 +419,7 @@ function renderAdmin(){
     $('aReset').onclick = () => confirmBox('¿Restaurar fotos?', 'Se volverá a la galería original.', () => { db.photos = D.galeria.map(p => ({...p})); save(); gallery(); renderAdmin(); });
   }
   if (tab === 'memories'){ memAdmin(c); return; }
+  if (tab === 'backup'){ backupAdmin(c); return; }
 
   if (tab === 'pending'){
     const p = pendingFields();
@@ -736,6 +737,8 @@ async function sbRequests(c){
       }
       toast(err ? 'No se pudo guardar: ' + err.message : (act === 'aceptada' ? 'Aceptada: la fecha quedó bloqueada ✔' : 'Listo ✔'));
       sbRequests(c);
+      if (!err && act === 'aceptada') setTimeout(() => modal({ title:'Reserva aceptada ✔', text:`${r.nombre} · ${fmtDate(r.fecha)}. ¿Quieres guardar ahora el Excel de respaldo actualizado?`,
+        actions:[ {label:'Ahora no'}, {label:'Guardar Excel', cls:'pink', onClick: async () => { try { const x = await shareOrDownload(await excelBackup()); if (x !== 'cancel') toast('Respaldo guardado ✔'); } catch (e2) { toast(e2.message); } }} ] }), 400);
     };
     if (act === 'aceptada') confirmBox('¿Aceptar la solicitud?', `Se bloqueará el ${fmtDate(r.fecha)} en la página para todos.`, run);
     else if (act === 'borrar') confirmBox('¿Eliminar la solicitud?', 'Se borrará de forma permanente.', run);
@@ -999,6 +1002,73 @@ async function memAdmin(c){
     else if (act === 'aprobado' && r.aparecen_menores && !r.consentimiento_tutor) toast('No se puede aprobar: aparecen menores sin autorización del tutor.');
     else run();
   });
+}
+
+/* ---------- Respaldo: Excel e historial con restauración ---------- */
+let XLSXlib = null;
+const loadXLSX = () => XLSXlib ? Promise.resolve(XLSXlib) : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload = () => res(XLSXlib = window.XLSX); s.onerror = () => rej(new Error('No se pudo cargar el generador de Excel.')); document.head.append(s); });
+const fmtTS = t => t ? new Date(t).toLocaleString('es-CL', {dateStyle:'short', timeStyle:'short'}) : '';
+const EST_TXT = { pendiente:'Pendiente', aceptada:'Aceptada', rechazada:'Rechazada', cotizada:'Cotizada' };
+async function backupData(){
+  if (!(SB && ADMIN)) throw new Error('El respaldo requiere la conexión a la base de datos.');
+  const [s, f, h] = await Promise.all([
+    SB.from('solicitudes').select('*').order('fecha'),
+    SB.from('fechas_bloqueadas').select('*').order('fecha'),
+    SB.from('historial').select('*').order('cuando', {ascending:false}).limit(2000)
+  ]);
+  if (s.error || f.error) throw new Error((s.error || f.error).message);
+  return { sol: s.data, fechas: f.data, hist: h.error ? null : h.data };
+}
+async function excelBackup(){
+  const [X, B] = await Promise.all([loadXLSX(), backupData()]);
+  const wb = X.utils.book_new();
+  const add = (name, rows, cols) => { const ws = X.utils.json_to_sheet(rows.length ? rows : [{}]); ws['!cols'] = cols.map(w => ({wch:w})); X.utils.book_append_sheet(wb, ws, name); };
+  const solRow = r => ({ 'Fecha reserva': r.fecha, 'Día': fmtDate(r.fecha), 'Tipo': r.tipo === 'evento' ? 'Cotización evento' : 'Reserva', 'Estado': EST_TXT[r.estado] || r.estado, 'Cliente': r.nombre, 'WhatsApp': r.telefono, 'Actividad': r.actividad || '', 'Personas': r.personas || '', 'Servicios': r.servicios || '', 'Observaciones': r.observaciones || '', 'Gestionado por': r.gestionado_por || '', 'Recibida': fmtTS(r.creado) });
+  const cols = [12,30,16,11,28,16,22,9,26,34,14,16];
+  add('Reservas aceptadas', B.sol.filter(r => r.estado === 'aceptada').map(solRow), cols);
+  add('Todas las solicitudes', B.sol.map(solRow), cols);
+  // Una hoja por mes con las fechas ocupadas
+  const meses = {};
+  B.fechas.forEach(x => { const k = x.fecha.slice(0,7); (meses[k] = meses[k] || []).push(x); });
+  add('Fechas bloqueadas', B.fechas.map(x => { const r = B.sol.find(s => s.id === x.solicitud); return { 'Fecha': x.fecha, 'Día': fmtDate(x.fecha), 'Cliente': r ? r.nombre : '(bloqueada manualmente / agenda)', 'WhatsApp': r ? r.telefono : '', 'Actividad': r ? r.actividad || '' : '', 'Personas': r ? r.personas || '' : '', 'Bloqueada el': fmtTS(x.creado) }; }), [12,30,30,16,22,9,16]);
+  Object.keys(meses).sort().forEach(k => { const [y,m] = k.split('-'); const nm = new Date(+y, +m-1, 1).toLocaleDateString('es-CL',{month:'long', year:'numeric'}); add(nm.charAt(0).toUpperCase() + nm.slice(1, 30), meses[k].map(x => { const r = B.sol.find(s => s.id === x.solicitud); return { 'Fecha': x.fecha, 'Día': fmtDate(x.fecha), 'Cliente': r ? r.nombre : '', 'WhatsApp': r ? r.telefono : '', 'Personas': r ? r.personas || '' : '' }; }), [12,30,28,16,9]); });
+  if (B.hist) add('Historial de cambios', B.hist.map(x => { const d = x.datos || {}; return { 'Cuándo': fmtTS(x.cuando), 'Tabla': x.tabla === 'fechas_bloqueadas' ? 'Fechas' : 'Solicitudes', 'Acción': ({INSERT:'Creó', UPDATE:'Modificó', DELETE:'BORRÓ'})[x.accion] || x.accion, 'Quién': x.quien || '', 'Fecha': d.fecha || '', 'Cliente': d.nombre || '', 'Estado': EST_TXT[d.estado] || d.estado || '', 'Estado anterior': x.antes ? (EST_TXT[x.antes.estado] || x.antes.estado || '') : '' }; }), [16,11,10,26,12,26,12,14]);
+  const name = `Respaldo-Quincho-${iso(new Date())}.xlsx`;
+  const out = X.write(wb, { bookType:'xlsx', type:'array' });
+  const blob = new Blob([out], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return { blob, name };
+}
+async function shareOrDownload({ blob, name }){
+  const file = new File([blob], name, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files:[file] })) { try { await navigator.share({ files:[file], title: name }); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  return 'downloaded';
+}
+async function backupAdmin(c){
+  c.innerHTML = `<div class="rc-head">${ico('m-star','teal','hmi')}<div><h3>Respaldo</h3><p class="muted">Cada reserva, cambio y borrado queda registrado en un historial que no se puede borrar.</p></div></div>`;
+  if (!(SB && ADMIN)) { c.innerHTML += '<p class="mem-err">El respaldo funciona con la base de datos conectada. Entra desde la página publicada en GitHub.</p>'; return; }
+  c.innerHTML += `<div class="bk-actions"><button type="button" class="btn2 primary full" id="bkXls"><svg><use href="#m-img"/></svg>Descargar Excel de respaldo</button>
+    <p class="tiny">Incluye: reservas aceptadas, todas las solicitudes, fechas bloqueadas, una hoja por mes y el historial de cambios. En el teléfono puedes compartirlo directo por correo o WhatsApp.</p></div>
+    <div class="sec-title"><h2>Borrados recientes</h2></div><div id="bkDel"><div class="mem-skel"></div></div>
+    <div class="sec-title"><h2>Últimos movimientos</h2></div><div id="bkLog"></div>`;
+  $('bkXls').onclick = async () => { const b = $('bkXls'); b.disabled = true; b.lastChild.textContent = 'Generando Excel…';
+    try { const r = await shareOrDownload(await excelBackup()); if (r !== 'cancel') toast(r === 'shared' ? 'Excel listo para enviar ✔' : 'Excel descargado ✔'); }
+    catch (e) { toast(e.message || 'No se pudo generar el Excel.'); }
+    b.disabled = false; b.lastChild.textContent = 'Descargar Excel de respaldo'; };
+  const { data: H, error } = await SB.from('historial').select('*').order('cuando', {ascending:false}).limit(150);
+  if (error) { $('bkDel').innerHTML = `<p class="mem-err">${/historial/.test(error.message) ? 'Falta ejecutar el script de respaldo (supabase_respaldo.sql) en Supabase.' : 'No se pudo cargar el historial.'}</p>`; return; }
+  const dels = H.filter(x => x.accion === 'DELETE');
+  $('bkDel').innerHTML = dels.length ? dels.slice(0, 30).map(x => { const d = x.datos || {}, fe = x.tabla === 'fechas_bloqueadas';
+      return `<div class="adminRow bkrow"><div><b>${fe ? '📅 Fecha desbloqueada' : '🗑 Solicitud eliminada'}: ${esc(fmtDate(d.fecha || ''))}</b><p class="tiny">${fe ? '' : esc(d.nombre || '') + ' · ' + esc(EST_TXT[d.estado] || d.estado || '') + ' · '}por ${esc(x.quien || '')} · ${esc(fmtTS(x.cuando))}</p></div><button class="mini" data-rest="${x.id}">↩ Restaurar</button></div>`; }).join('')
+    : '<p class="muted">No hay borrados. Todo en orden ✔</p>';
+  $('bkLog').innerHTML = H.slice(0, 25).map(x => { const d = x.datos || {}; return `<div class="bklog"><span class="bkdot ${x.accion}"></span><span><b>${({INSERT:'Nuevo', UPDATE:'Cambio', DELETE:'Borrado'})[x.accion]}</b> · ${x.tabla === 'fechas_bloqueadas' ? 'fecha' : 'solicitud'} ${esc(d.fecha || '')} ${d.nombre ? '· ' + esc(d.nombre) : ''}${x.accion === 'UPDATE' && x.antes ? ' · ' + esc(EST_TXT[x.antes.estado] || '') + ' → ' + esc(EST_TXT[d.estado] || '') : ''}<small>${esc(x.quien || '')} · ${esc(fmtTS(x.cuando))}</small></span></div>`; }).join('');
+  c.querySelectorAll('[data-rest]').forEach(b => b.onclick = () => { const x = H.find(y => String(y.id) === b.dataset.rest); if (!x) return; const d = x.datos;
+    confirmBox('¿Restaurar?', x.tabla === 'fechas_bloqueadas' ? `Se volverá a bloquear el ${fmtDate(d.fecha)}.` : `Se recuperará la solicitud de ${d.nombre} del ${fmtDate(d.fecha)}.`, async () => {
+      let err;
+      if (x.tabla === 'fechas_bloqueadas') { ({ error: err } = await SB.from('fechas_bloqueadas').upsert({ fecha: d.fecha, solicitud: d.solicitud || null })); if (!err) { RESERVADAS.add(d.fecha); calendar(); homeCal(); } }
+      else ({ error: err } = await SB.from('solicitudes').upsert(d));
+      toast(err ? 'No se pudo restaurar: ' + err.message : 'Restaurado ✔'); backupAdmin(c);
+    }); });
 }
 
 /* ---------- Pestañas (rutas por #hash) ---------- */

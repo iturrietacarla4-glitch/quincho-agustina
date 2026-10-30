@@ -1067,3 +1067,10 @@ footer.sfoot .sf-in{text-align:center}
 
 .sbstat{font-size:13px;font-weight:800;padding:8px 12px;border-radius:12px;margin:0 0 6px}
 .sbstat.ok{background:#e6f8ec;color:#13804a}.sbstat.bad{background:#fff0f0;color:#b4233d}.sbstat.wait{background:#f1f4f7;color:#5d6b7a}
+
+.bk-actions{margin:10px 0 6px}
+.bkrow b{font-size:14px}
+.bklog{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #eef1f5;font-size:13.5px}
+.bklog small{display:block;color:var(--muted);font-size:11.5px}
+.bkdot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none;background:#1fae5b}
+.bkdot.UPDATE{background:#1f6fe0}.bkdot.DELETE{background:#e5484d}
