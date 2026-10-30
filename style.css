@@ -218,6 +218,16 @@ legend{font-size:13.5px;font-weight:800;padding:0 6px}
 .photoAdmin input{margin-top:6px}
 .abrow{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:8px;align-items:center;margin:8px 0}
 .abrow input{margin-top:0!important}
+.extras{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+.xrow{display:flex!important;align-items:center;gap:10px;margin:6px 0!important;font-weight:600!important}
+.xrow input{max-width:120px;margin-top:0!important}
+.autosw{background:var(--teal-l);border-radius:12px;padding:10px 12px;margin:12px 0 0!important}
+.autoval{background:#f0fbf4!important;color:#13804a;font-weight:800}
+.planed{margin-top:18px;border:1.5px dashed #d5dde6;border-radius:14px;padding:10px 14px}
+.planed summary{cursor:pointer;font-weight:800}
+.planed h4{font-family:var(--head);margin:14px 0 4px}
+.prow{display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:8px;align-items:center;margin:6px 0}
+.prow input,.prow select{margin-top:0!important;padding:10px!important}
 .rsum{background:var(--yellow-l);border-radius:12px;padding:10px 12px;font-size:14px}
 .rout{margin-top:20px;text-align:center}
 .rout img{max-width:min(100%,420px);margin:0 auto 14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid #eef1f4}
@@ -302,6 +312,16 @@ dialog::backdrop{background:rgba(20,26,36,.78);backdrop-filter:blur(3px)}
   .adminRow{flex-direction:column;align-items:flex-start}
   .abrow{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:8px;align-items:center;margin:8px 0}
 .abrow input{margin-top:0!important}
+.extras{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+.xrow{display:flex!important;align-items:center;gap:10px;margin:6px 0!important;font-weight:600!important}
+.xrow input{max-width:120px;margin-top:0!important}
+.autosw{background:var(--teal-l);border-radius:12px;padding:10px 12px;margin:12px 0 0!important}
+.autoval{background:#f0fbf4!important;color:#13804a;font-weight:800}
+.planed{margin-top:18px;border:1.5px dashed #d5dde6;border-radius:14px;padding:10px 14px}
+.planed summary{cursor:pointer;font-weight:800}
+.planed h4{font-family:var(--head);margin:14px 0 4px}
+.prow{display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:8px;align-items:center;margin:6px 0}
+.prow input,.prow select{margin-top:0!important;padding:10px!important}
 .rsum{background:var(--yellow-l);border-radius:12px;padding:10px 12px;font-size:14px}
 .rout{margin-top:20px;text-align:center}
 .rout img{max-width:min(100%,420px);margin:0 auto 14px;border-radius:16px;box-shadow:var(--shadow);border:1px solid #eef1f4}

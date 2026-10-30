@@ -354,20 +354,63 @@ function renderAdmin(){
   }
 }
 
-/* ---------- Generador de comprobantes (no guarda datos) ---------- */
-let rcpt = { cliente:'', fecha:'', horario:'', personas:'', incluye:'', total:'', abonos:[{fecha:iso(today), monto:'', medio:''}] };
+/* ---------- Generador de comprobantes ----------
+   Los datos del cliente NO se guardan. Los precios de planes y adicionales
+   se guardan solo en el navegador de Carla (no se publican en el código). */
+const PLAN_KEY = 'quincho-planes-v1';
+const PLAN_DEF = {
+  planes: [
+    { nombre:'Solo el espacio', tipo:'persona', precio:'' },
+    { nombre:'Paseo de curso', tipo:'persona', precio:'' },
+    { nombre:'Pack full day', tipo:'persona', precio:'' },
+    { nombre:'Full day', tipo:'persona', precio:'' },
+    { nombre:'Día completo + fiesta', tipo:'persona', precio:'' },
+    { nombre:'Atención completa', tipo:'persona', precio:'' },
+    { nombre:'Precio por el día (pocas personas)', tipo:'fijo', precio:'' }
+  ],
+  extras: [
+    { nombre:'Juego inflable', tipo:'fijo', precio:'' },
+    { nombre:'Completos', tipo:'unidad', precio:'' },
+    { nombre:'Decoración', tipo:'fijo', precio:'' }
+  ]
+};
+let PL; try { PL = JSON.parse(localStorage.getItem(PLAN_KEY) || 'null') || structuredClone(PLAN_DEF); } catch { PL = structuredClone(PLAN_DEF); }
+const savePL = () => { try { localStorage.setItem(PLAN_KEY, JSON.stringify(PL)); } catch {} };
+const TIPO = { persona:'por persona', fijo:'precio fijo', unidad:'por unidad' };
+
+let rcpt = { cliente:'', fecha:'', horario:'', personas:'', incluye:'', total:'', plan:'', auto:true, extras:{}, abonos:[{fecha:iso(today), monto:'', medio:''}] };
 let rcptBlob = null, rcptUrl = '';
+
+function calc(){
+  const n = Number(rcpt.personas)||0, parts = []; let total = 0;
+  const p = PL.planes[rcpt.plan];
+  if (p){ const pr = Number(p.precio)||0; const v = p.tipo === 'persona' ? pr*n : pr; total += v;
+    parts.push(p.tipo === 'persona' ? `${p.nombre}: ${n} personas x ${clp(pr)||'$0'} (${clp(v)||'$0'})` : `${p.nombre} (${clp(v)||'$0'})`); }
+  PL.extras.forEach((x,i) => { const q = rcpt.extras[i]; if (!q) return; const pr = Number(x.precio)||0;
+    const v = x.tipo === 'unidad' ? pr*q : pr; total += v;
+    parts.push(x.tipo === 'unidad' ? `${q} ${x.nombre.toLowerCase()} x ${clp(pr)||'$0'} (${clp(v)||'$0'})` : `${x.nombre} (${clp(v)||'$0'})`); });
+  return { total, texto: parts.length ? (parts[0] + (parts.length > 1 ? '. Adicionales: ' + parts.slice(1).join(' + ') : '')) : '' };
+}
+
 function receiptForm(c){
   c.innerHTML = `<h3>Comprobante de reserva</h3>
-    <p class="muted">Completa los datos y genera la imagen para enviarla al cliente por WhatsApp. Nada de esto se guarda ni se publica.</p>
+    <p class="muted">Completa los datos y genera la imagen para enviarla por WhatsApp. Los datos del cliente no se guardan.</p>
     <div class="form rform">
       <label>Cliente<input id="rCliente" maxlength="80" placeholder="Nombre del cliente o curso"></label>
-      <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" placeholder="Ej: 9:30 a 20:00 / Full day"></label></div>
-      <div class="row2"><label>Personas<input id="rPersonas" type="number" min="0" inputmode="numeric"></label><label>Valor total (CLP)<input id="rTotal" type="number" min="0" step="1000" inputmode="numeric" placeholder="Opcional"></label></div>
+      <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" list="rHorList" placeholder="Elige o escribe"></label></div>
+      <datalist id="rHorList"><option value="9:30 a 20:00"><option value="Full day"><option value="Día completo"><option value="Horario a acordar"></datalist>
+      <div class="row2"><label>Plan<select id="rPlan"><option value="">— Elegir plan —</option>${PL.planes.map((p,i) => `<option value="${i}">${esc(p.nombre)}</option>`).join('')}<option value="otro">Otro / personalizado</option></select></label>
+        <label>Personas<input id="rPersonas" type="number" min="0" inputmode="numeric"></label></div>
+      <fieldset><legend>Adicionales</legend><div class="extras">${PL.extras.map((x,i) => x.tipo === 'unidad'
+        ? `<label class="xrow"><span>${esc(x.nombre)}</span><input type="number" min="0" inputmode="numeric" data-x="${i}" placeholder="Cantidad"></label>`
+        : `<label class="check"><input type="checkbox" data-x="${i}"> ${esc(x.nombre)}</label>`).join('')}</div></fieldset>
+      <label class="check autosw"><input type="checkbox" id="rAuto"> Calcular el valor automáticamente</label>
+      <div class="row2"><label>Valor total (CLP)<input id="rTotal" type="number" min="0" step="1000" inputmode="numeric" placeholder="Opcional"></label><span></span></div>
       <label>Incluye<textarea id="rIncluye" rows="3" maxlength="400" placeholder="Ej: Pack full day: 34 personas"></textarea></label>
       <fieldset><legend>Abonos</legend><div id="rAbonos"></div><button type="button" class="mini" id="rAddAb">+ Agregar abono</button></fieldset>
       <p class="rsum" id="rSum"></p>
       <button type="button" class="btn pink full" id="rGen">Generar comprobante</button>
+      <details class="planed"><summary>⚙️ Mis planes y precios</summary><div id="rPlanes"></div></details>
     </div>
     <div id="rOut" class="rout" hidden>
       <img id="rPrev" alt="Vista previa del comprobante">
@@ -378,14 +421,29 @@ function receiptForm(c){
       <p class="tiny" id="rMsg">Si los botones no funcionan en tu teléfono, mantén presionada la imagen y elige «Guardar imagen».</p>
     </div>`;
   const map = {rCliente:'cliente', rFecha:'fecha', rHorario:'horario', rPersonas:'personas', rTotal:'total', rIncluye:'incluye'};
-  Object.entries(map).forEach(([id,k]) => { const el = $(id); el.value = rcpt[k]; el.addEventListener('input', () => { rcpt[k] = el.value; rSum(); }); });
+  Object.entries(map).forEach(([id,k]) => { const el = $(id); el.value = rcpt[k]; el.addEventListener('input', () => { rcpt[k] = el.value; if (rcpt.auto && (k === 'personas')) applyCalc(); rSum(); }); });
+  $('rPlan').value = rcpt.plan;
+  $('rPlan').onchange = () => { rcpt.plan = $('rPlan').value; if (rcpt.plan === 'otro') { setAuto(false); } else if (rcpt.auto) applyCalc(); };
+  c.querySelectorAll('[data-x]').forEach(inp => {
+    const i = +inp.dataset.x; if (inp.type === 'checkbox') inp.checked = !!rcpt.extras[i]; else inp.value = rcpt.extras[i] || '';
+    inp.addEventListener('input', () => { rcpt.extras[i] = inp.type === 'checkbox' ? (inp.checked ? 1 : 0) : (Number(inp.value)||0); if (rcpt.auto) applyCalc(); });
+  });
+  const setAuto = on => { rcpt.auto = on; $('rAuto').checked = on; $('rTotal').readOnly = on; $('rTotal').classList.toggle('autoval', on);
+    $('rTotal').placeholder = on ? 'Se calcula solo' : 'Escribe el valor'; if (on) applyCalc(); rSum(); };
+  const applyCalc = () => { const r = calc(); if (rcpt.plan === '' && !r.texto) return;
+    rcpt.total = r.total ? String(r.total) : ''; $('rTotal').value = rcpt.total;
+    if (r.texto) { rcpt.incluye = r.texto; $('rIncluye').value = r.texto; }
+    const p = PL.planes[rcpt.plan]; if (p && !p.precio) toast(`Falta el precio de «${p.nombre}»: agrégalo en «Mis planes y precios».`);
+    rSum(); };
+  $('rAuto').onchange = () => setAuto($('rAuto').checked);
+  setAuto(rcpt.auto && rcpt.plan !== 'otro');
   const drawAb = () => {
-    $('rAbonos').innerHTML = rcpt.abonos.map((ab,i) => `<div class="abrow"><input type="date" data-ab="${i}" data-k="fecha" value="${esc(ab.fecha)}" aria-label="Fecha del abono"><input type="number" min="0" step="1000" inputmode="numeric" data-ab="${i}" data-k="monto" value="${esc(ab.monto)}" placeholder="Monto" aria-label="Monto del abono"><input data-ab="${i}" data-k="medio" value="${esc(ab.medio)}" placeholder="Medio (transferencia…)" aria-label="Medio de pago" maxlength="40"><button type="button" class="mini danger" data-del-ab="${i}" aria-label="Quitar abono">✕</button></div>`).join('') || '<p class="tiny">Sin abonos.</p>';
+    $('rAbonos').innerHTML = rcpt.abonos.map((ab,i) => `<div class="abrow"><input type="date" data-ab="${i}" data-k="fecha" value="${esc(ab.fecha)}" aria-label="Fecha del abono"><input type="number" min="0" step="1000" inputmode="numeric" data-ab="${i}" data-k="monto" value="${esc(ab.monto)}" placeholder="Monto" aria-label="Monto del abono"><input data-ab="${i}" data-k="medio" value="${esc(ab.medio)}" list="rMedios" placeholder="Medio de pago" aria-label="Medio de pago" maxlength="40"><button type="button" class="mini danger" data-del-ab="${i}" aria-label="Quitar abono">✕</button></div>`).join('') + '<datalist id="rMedios"><option value="Transferencia"><option value="Efectivo"><option value="Depósito"><option value="Tarjeta"></datalist>' || '';
     $('rAbonos').querySelectorAll('[data-ab]').forEach(inp => inp.addEventListener('input', () => { rcpt.abonos[+inp.dataset.ab][inp.dataset.k] = inp.value; rSum(); }));
     $('rAbonos').querySelectorAll('[data-del-ab]').forEach(b => b.onclick = () => { rcpt.abonos.splice(+b.dataset.delAb,1); drawAb(); rSum(); });
   };
   $('rAddAb').onclick = () => { rcpt.abonos.push({fecha:iso(today), monto:'', medio:''}); drawAb(); };
-  drawAb(); rSum();
+  drawAb(); rSum(); planEditor();
   $('rGen').onclick = async () => {
     if (!rcpt.cliente.trim() || !rcpt.fecha) { toast('Completa al menos el cliente y la fecha.'); (!rcpt.cliente.trim() ? $('rCliente') : $('rFecha')).focus(); return; }
     $('rGen').disabled = true; $('rGen').textContent = 'Generando…';
@@ -406,6 +464,23 @@ function receiptForm(c){
     } catch (e) { toast('No se pudo generar la imagen.'); }
     $('rGen').disabled = false; $('rGen').textContent = 'Generar comprobante';
   };
+}
+
+function planEditor(){
+  const box = $('rPlanes'); if (!box) return;
+  const rows = (list, key) => list.map((p,i) => `<div class="prow"><input data-pk="${key}" data-i="${i}" data-f="nombre" value="${esc(p.nombre)}" aria-label="Nombre" maxlength="50">
+      <select data-pk="${key}" data-i="${i}" data-f="tipo" aria-label="Tipo de precio">${Object.entries(TIPO).filter(([k]) => key === 'extras' || k !== 'unidad').map(([k,v]) => `<option value="${k}" ${p.tipo===k?'selected':''}>${v}</option>`).join('')}</select>
+      <input type="number" min="0" step="500" inputmode="numeric" data-pk="${key}" data-i="${i}" data-f="precio" value="${esc(p.precio)}" placeholder="Precio CLP" aria-label="Precio">
+      <button type="button" class="mini danger" data-pdel="${key}" data-i="${i}" aria-label="Quitar">✕</button></div>`).join('');
+  box.innerHTML = `<p class="tiny">Estos precios se guardan solo en este teléfono o computador; no aparecen en la página pública.</p>
+    <h4>Planes</h4>${rows(PL.planes,'planes')}<button type="button" class="mini" data-padd="planes">+ Agregar plan</button>
+    <h4>Adicionales</h4>${rows(PL.extras,'extras')}<button type="button" class="mini" data-padd="extras">+ Agregar adicional</button>
+    <div class="modal-actions" style="margin-top:12px"><button type="button" class="btn teal" id="pSave">Guardar planes</button></div>`;
+  box.querySelectorAll('[data-pk]').forEach(inp => inp.addEventListener('input', () => { PL[inp.dataset.pk][+inp.dataset.i][inp.dataset.f] = inp.value; }));
+  box.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { PL[b.dataset.pdel].splice(+b.dataset.i,1); savePL(); rerender(); });
+  box.querySelectorAll('[data-padd]').forEach(b => b.onclick = () => { PL[b.dataset.padd].push({nombre:'Nuevo', tipo:'fijo', precio:''}); rerender(); });
+  $('pSave').onclick = () => { savePL(); toast('Planes guardados en este dispositivo ✔'); rerender(); };
+  function rerender(){ const open = true; receiptForm($('adminContent')); const d = document.querySelector('.planed'); if (d) d.open = open; }
 }
 const abTotal = r => r.abonos.reduce((s,a) => s + (Number(a.monto)||0), 0);
 function rSum(){
