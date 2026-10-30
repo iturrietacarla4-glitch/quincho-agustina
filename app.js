@@ -320,6 +320,39 @@ function policies(){
 
 /* ---------- Mural ---------- */
 
+/* ---------- Pie de página (componente reutilizable) ---------- */
+function siteFooter(){
+  const N = D.negocio, R = N.redes || {};
+  const wa = waLink(`Hola Carla, tengo una consulta sobre ${N.nombre}.`);
+  const btn = (href, cls, sym, t, s, ext) => `<a class="fbtn ${cls}" href="${esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}><span class="fic"><svg><use href="#${sym}"/></svg></span><span><b>${t}</b><small>${s}</small></span></a>`;
+  const redes = [
+    R.instagram && R.instagram.url ? { cls:'ig', sym:'m-ig', url:R.instagram.url, t:'Instagram ' + (R.instagram.usuario || '') } : null,
+    R.facebook && R.facebook.url ? { cls:'fb', sym:'s-fb', url:R.facebook.url, t:'Facebook' } : null,
+    R.tiktok && R.tiktok.url ? { cls:'tt', sym:'s-tt', url:R.tiktok.url, t:'TikTok' } : null
+  ].filter(Boolean);
+  $('siteFooter').innerHTML = `
+    <img class="fleaf a" src="assets/hoja-monstera.webp" alt="" aria-hidden="true" loading="lazy" width="167" height="179">
+    <img class="fleaf b" src="assets/hoja-palma.webp" alt="" aria-hidden="true" loading="lazy" width="165" height="191">
+    <div class="sf-in">
+      <img class="sf-logo" src="assets/logo.webp" alt="${esc(N.nombre)}" width="900" height="569" loading="lazy">
+      <p class="sf-lema">${esc((N.lema || []).join(' '))}</p>
+      <a class="sf-loc" href="${esc(N.mapsUrl)}" target="_blank" rel="noopener"><svg><use href="#m-pin"/></svg>${esc((N.direccionExacta || N.ubicacion).replace(/,\s*/g,' · '))}</a>
+      <div class="fbtns">
+        ${btn(wa, 'wa', 'm-wa', 'WhatsApp', 'Escríbenos ahora', true)}
+        ${N.contacto.email ? btn('mailto:' + N.contacto.email, 'ml', 'm-mail', 'Correo', 'Contáctanos', false) : ''}
+        ${btn(N.mapsUrl, 'mp', 'm-pin', 'Ubicación', 'Ver en mapa', true)}
+      </div>
+      ${redes.length ? `<div class="sf-redes"><span class="sf-rt">Síguenos en nuestras redes</span><div class="sf-ri">${redes.map(r => `<a class="sic ${r.cls}" href="${esc(r.url)}" target="_blank" rel="noopener" aria-label="${esc(r.t)}"><svg><use href="#${r.sym}"/></svg></a>`).join('')}</div></div>` : ''}
+      <a class="sf-dudas" href="${esc(wa)}" target="_blank" rel="noopener"><svg><use href="#i-heart"/></svg>¿Dudas? Escríbenos, estamos para ayudarte<svg><use href="#i-heart"/></svg></a>
+    </div>
+    <div class="sf-fluva">
+      <svg class="sf-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60V28C180 6 320 0 520 18s360 38 560 18 280-30 360-22v46z" fill="#1D2B3D"/></svg>
+      <img class="fleaf c" src="assets/hoja-flor.webp" alt="" aria-hidden="true" loading="lazy" width="172" height="180">
+      <span>Desarrollado por</span>
+      <img class="sf-fl" src="assets/fluva.png" alt="FLUVA · Tecnología que fluye contigo" width="620" height="235" loading="lazy">
+    </div>`;
+}
+
 /* ---------- Contacto ---------- */
 function contact(){
   const N = D.negocio;
@@ -1086,6 +1119,6 @@ function homeCal(){
 }
 
 /* ---------- Inicio ---------- */
-facilities(); gallery(); events(); calendar(); prices(); policies(); memInit(); contact(); home(); rzInit(); route();
+facilities(); gallery(); events(); calendar(); prices(); policies(); memInit(); contact(); siteFooter(); home(); rzInit(); route();
 sbReady.then(async sb => { memLoad(); if (!sb) return; sbLoadDates(); ADMIN = await sbAdminName(); if (curView === 'admin') route(); });
 })();
