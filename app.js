@@ -558,14 +558,12 @@ function adminRoute(){
   if (u) { $('adminWho').textContent = u; renderAdmin(); }
   window.scrollTo(0,0);
 }
-$('lUser').innerHTML = (D.administradores || []).map(x => `<option>${esc(x.nombre)}</option>`).join('');
 let tries = 0;
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (tries >= 5) { $('lMsg').textContent = 'Demasiados intentos. Recarga la página para intentar de nuevo.'; return; }
-  const adm = (D.administradores || []).find(x => x.nombre === $('lUser').value);
-  let ok = false; try { ok = !!adm && (await sha(ADM_SALT + $('lPin').value.trim())) === adm.pin; } catch {}
-  if (!ok) { tries++; $('lMsg').textContent = 'PIN incorrecto.'; $('lPin').value = ''; $('lPin').focus(); return; }
+  let adm = null; try { const hh = await sha(ADM_SALT + $('lUser').value.trim().toLowerCase() + '|' + $('lPin').value); adm = (D.administradores || []).find(x => x.h === hh); } catch {}
+  if (!adm) { tries++; $('lMsg').textContent = 'Correo o clave incorrectos.'; $('lPin').value = ''; $('lPin').focus(); return; }
   try { sessionStorage.setItem(SKEY, adm.nombre); } catch {}
   $('lPin').value = ''; $('lMsg').textContent = ''; adminRoute();
 });

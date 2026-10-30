@@ -197,8 +197,8 @@
       <h3>🔒 Acceso administración</h3>
       <p class="muted">Solo para Carla y Matías.</p>
       <form id="loginForm" class="form" autocomplete="off">
-        <label>Usuario<select id="lUser"></select></label>
-        <label>PIN<input id="lPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" required></label>
+        <label>Correo<input id="lUser" type="email" autocomplete="username" required maxlength="80" placeholder="tu@correo.com"></label>
+        <label>Clave<input id="lPin" type="password" autocomplete="current-password" required maxlength="64"></label>
         <button class="btn pink full" type="submit">Entrar</button>
         <p class="tiny" id="lMsg"></p>
       </form>
