@@ -85,7 +85,7 @@ function facilities(){
     const f = D.instalaciones[b.dataset.fac];
     $('fImg').src = f.foto; $('fImg').alt = f.titulo;
     $('fTitle').textContent = `${f.icono} ${f.titulo}`; $('fText').textContent = f.texto;
-    $('fList').innerHTML = Object.entries(f.detalles).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${v ? esc(v) : PEND}</dd>`).join('');
+    $('fList').innerHTML = Object.entries(f.detalles).filter(([,v]) => v).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     openDlg($('facility'));
   }));
 }
@@ -299,17 +299,10 @@ let tab = 'receipt';
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; renderAdmin(); }));
 function pendingFields(){
   const N = D.negocio, out = [];
-  if (!N.direccionExacta) out.push('Dirección exacta / pin de Google Maps');
-  if (!N.contacto.email) out.push('Correo electrónico de contacto');
-  if (!N.horarios) out.push('Horario de funcionamiento');
-  if (!N.temporada) out.push('Temporada de apertura');
-  if (!N.aforoMaximo) out.push('Aforo máximo del recinto');
-  if (!N.redes.facebook) out.push('Facebook (si existe)');
-  if (!N.redes.tiktok) out.push('TikTok (si existe)');
-  if (!(EX.escala||[]).length && !db.prices.exclusive) out.push('Precio arriendo exclusivo por día');
-  out.push('Otras condiciones: cancelación, alcohol, mascotas, uso de piscina');
-  D.instalaciones.forEach(f => Object.entries(f.detalles).forEach(([k,v]) => { if (!v) out.push(`${f.titulo}: ${k}`); }));
-  out.push('Fotos originales en alta resolución (las actuales son recortes de Instagram)');
+  out.push('Pin exacto de Google Maps (ahora busca «El Manzano, Las Dichas, Casablanca»)');
+  if (!N.redes.facebook) out.push('Facebook (más adelante)');
+  if (!N.redes.tiktok) out.push('TikTok (más adelante)');
+  D.instalaciones.forEach(f => Object.entries(f.detalles).forEach(([k,v]) => { if (!v) out.push(`${f.titulo}: ${k} (no se muestra hasta confirmar)`); }));
   return out;
 }
 function renderAdmin(){

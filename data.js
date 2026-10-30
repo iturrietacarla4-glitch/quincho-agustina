@@ -19,8 +19,8 @@ window.QUINCHO_DATA = {
     },
     redes: {
       instagram: { usuario: '@elquincho.deagustina', url: 'https://www.instagram.com/elquincho.deagustina/' },
-      facebook: null,                  // PENDIENTE
-      tiktok: null                     // PENDIENTE
+      facebook: null,                  // más adelante
+      tiktok: null                     // más adelante
     },
     horarios: 'Arriendo normal: 9:30 a 20:00 · Eventos: horario a acordar',
     temporada: 'Disponible todo el año',
@@ -30,28 +30,28 @@ window.QUINCHO_DATA = {
   instalaciones: [
     { id: 'piscina', icono: '🏊', titulo: 'Piscina', foto: 'assets/piscina.jpg',
       texto: 'Piscina al aire libre con zona de poca profundidad, reposeras y quitasoles.',
-      detalles: { 'Medidas / profundidad': null, 'Salvavidas': null, 'Horario de piscina': null } },
+      detalles: { 'Medidas / profundidad': null, 'Salvavidas': 'No' } },
     { id: 'cancha', icono: '⚽', titulo: 'Cancha y zona picnic', foto: 'assets/picnic-cancha.jpg',
       texto: 'Cancha de pasto sintético con arcos y mesas de picnic de madera junto a ella.',
-      detalles: { 'Tipo de cancha': 'Baby fútbol, pasto sintético', 'Incluida en el arriendo': 'Sí', 'Medidas': null } },
+      detalles: { 'Tipo de cancha': 'Baby fútbol, pasto sintético', 'Incluida en el arriendo': 'Sí' } },
     { id: 'quincho', icono: '🍖', titulo: 'Quincho y parrillas', foto: 'assets/parrilla.jpg',
       texto: 'Parrilla grande y quincho techado para el asado de toda la familia.',
-      detalles: { 'Parrillas': 'Equipadas, incluidas en el arriendo', 'Refrigeradores': 'Incluidos', 'Carbón / leña': null } },
+      detalles: { 'Parrillas': 'Equipadas, incluidas en el arriendo', 'Refrigeradores': 'Incluidos', 'Carbón o leña': 'Se pueden usar ambos' } },
     { id: 'salon', icono: '🍽️', titulo: 'Salón y terraza', foto: 'assets/salon-montaje.jpg',
       texto: 'Salón revestido en madera y terraza techada, con montaje de mesas para almuerzos y eventos.',
-      detalles: { 'Capacidad para eventos': 'Hasta 80 personas', 'Loza': 'Incluida en el arriendo', 'Mantelería': null } },
+      detalles: { 'Capacidad para eventos': 'Hasta 80 personas', 'Loza': 'Incluida en el arriendo', 'Mantelería': 'A solicitud del evento' } },
     { id: 'juegos', icono: '🎈', titulo: 'Juegos inflables', foto: 'assets/inflable-tobogan.jpg',
       texto: 'Gran tobogán inflable de colores para que los niños disfruten todo el día.',
-      detalles: { 'Edades recomendadas': null, 'Incluido en el arriendo': null } },
+      detalles: { 'Incluido en el arriendo': 'No, se cotiza aparte' } },
     { id: 'cama', icono: '🤸', titulo: 'Cama elástica y columpios', foto: 'assets/cama-elastica.jpg',
       texto: 'Cama elástica con malla de protección y columpios, bajo toldos de sombra.',
-      detalles: { 'Edades recomendadas': null, 'Supervisión': null } },
+      detalles: {} },
     { id: 'sombra', icono: '⛱️', titulo: 'Áreas de sombra', foto: 'assets/juegos-piscina.jpg',
       texto: 'Toldos tensados y quitasoles alrededor de la piscina para descansar del sol.',
-      detalles: { 'Mesas disponibles': null, 'Reposeras': null } },
+      detalles: { 'Mesas disponibles': 'Sí', 'Reposeras': 'Sí' } },
     { id: 'foodtruck', icono: '🌮', titulo: 'Food truck', foto: 'assets/foodtruck.jpg',
       texto: 'Carro de comida en el recinto para picar algo rico sin salir del quincho.',
-      detalles: { 'Menú': null, 'Días de atención': null } }
+      detalles: { 'Menú': 'A solicitud del evento', 'Días de atención': 'Cuando se solicite para el evento' } }
   ],
 
   /* cat: recinto | familia | eventos  (se usa para los filtros de la galería) */
@@ -121,6 +121,9 @@ window.QUINCHO_DATA = {
 
   /* Condiciones de reserva. Agregar más líneas aquí (cancelación, alcohol, mascotas, piscina…) */
   politicas: [
-    { icono: '💳', texto: 'Para reservar se requiere un abono. Carla te confirma el monto por WhatsApp según tu reserva.' }
+    { icono: '💳', texto: 'Para reservar se requiere un abono. Carla te confirma el monto por WhatsApp según tu reserva.' },
+    { icono: '🏊', texto: 'Uso de piscina según el horario contratado.' },
+    { icono: '📞', texto: 'Para cancelaciones, contacta a Carla por WhatsApp.' },
+    { icono: '🐶', texto: 'Se admiten mascotas.' }
   ]
 };
