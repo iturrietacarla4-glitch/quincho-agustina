@@ -391,12 +391,13 @@ function pendingFields(){
 }
 function renderAdmin(){
   if (tab === 'dates') tab = 'cal';
-  const inMore = ['plans','memories','backup','pending','config','photos'].includes(tab);
+  const inMore = ['plans','memories','backup','pending','config','photos','pagos'].includes(tab);
   document.querySelectorAll('.adm-nav button').forEach(b => { const on = b.dataset.tab ? b.dataset.tab === tab : inMore; b.classList.toggle('on', on); on ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'); });
   const c = $('adminContent'); c.className = 'adm-view v-' + tab;
   if (tab === 'home'){ adminHome(c); return; }
   if (tab === 'receipt'){ receiptForm(c); return; }
   if (tab === 'plans'){ adminPlans(c); return; }
+  if (tab === 'pagos'){ adminPagos(c); return; }
   if (tab === 'config'){ adminConfig(c); return; }
   if (tab === 'cal'){ if (SB && ADMIN) { adminCal(c); return; } tab = 'dates'; }
   if (SB && ADMIN && tab === 'requests'){ sbRequests(c); return; }
@@ -511,6 +512,7 @@ function receiptForm(c){
         <button type="button" class="btn2 wa" id="rShare"><svg><use href="#m-wa"/></svg>Compartir</button>
         <a class="btn2 ghost" id="rDown" download="comprobante.png" href="#">Descargar</a>
       </div>
+      <button type="button" class="btn2 ghost full" id="rSavePago" style="margin-top:10px" hidden>💾 Guardar estos montos en Pagos</button>
       <p class="tiny" id="rMsg">Si los botones no funcionan en tu teléfono, mantén presionada la imagen y elige «Guardar imagen».</p>
     </div>`;
   const map = {rCliente:'cliente', rFecha:'fecha', rHorario:'horario', rPersonas:'personas', rTotal:'total', rIncluye:'incluye'};
@@ -555,6 +557,9 @@ function receiptForm(c){
       const name = 'comprobante-' + rcpt.fecha + '-' + rcpt.cliente.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) + '.png';
       $('rPrev').src = rcptUrl; $('rDown').href = rcptUrl; $('rDown').download = name;
       $('rOut').hidden = false; $('rOut').scrollIntoView({behavior:'smooth', block:'start'});
+      if (SB && ADMIN) { $('rSavePago').hidden = false; $('rSavePago').onclick = async () => {
+        const { error } = await SB.from('pagos').upsert({ fecha: rcpt.fecha, cliente: rcpt.cliente.trim(), personas: Number(rcpt.personas)||0, horario: rcpt.horario || null, incluye: rcpt.incluye || null, total: Number(rcpt.total)||0, abonos: rcpt.abonos.filter(x => Number(x.monto) > 0).map(x => ({ fecha:x.fecha, monto:Number(x.monto), medio:x.medio || '' })), actualizado: new Date().toISOString(), actualizado_por: ADMIN }, { onConflict:'fecha' });
+        toast(error ? (/pagos/.test(error.message) ? 'Falta ejecutar supabase_pagos.sql' : 'No se pudo: ' + error.message) : 'Guardado en Pagos ✔'); ADM.loaded = 0; }; }
       $('rShare').onclick = async () => {
         const file = new File([rcptBlob], name, {type:'image/png'});
         try {
@@ -990,13 +995,14 @@ const fmtTS = t => t ? new Date(t).toLocaleString('es-CL', {dateStyle:'short', t
 const EST_TXT = { pendiente:'Pendiente', aceptada:'Aceptada', rechazada:'Rechazada', cotizada:'Cotizada' };
 async function backupData(){
   if (!(SB && ADMIN)) throw new Error('El respaldo requiere la conexión a la base de datos.');
-  const [s, f, h] = await Promise.all([
+  const [s, f, h, pg] = await Promise.all([
     SB.from('solicitudes').select('*').order('fecha'),
     SB.from('fechas_bloqueadas').select('*').order('fecha'),
-    SB.from('historial').select('*').order('cuando', {ascending:false}).limit(2000)
+    SB.from('historial').select('*').order('cuando', {ascending:false}).limit(2000),
+    SB.from('pagos').select('*').order('fecha')
   ]);
   if (s.error || f.error) throw new Error((s.error || f.error).message);
-  return { sol: s.data, fechas: f.data, hist: h.error ? null : h.data };
+  return { sol: s.data, fechas: f.data, hist: h.error ? null : h.data, pagos: pg.error ? null : pg.data };
 }
 async function excelBackup(){
   const [X, B] = await Promise.all([loadXLSX(), backupData()]);
@@ -1004,6 +1010,9 @@ async function excelBackup(){
   const add = (name, rows, cols) => { const ws = X.utils.json_to_sheet(rows.length ? rows : [{}]); ws['!cols'] = cols.map(w => ({wch:w})); X.utils.book_append_sheet(wb, ws, name); };
   const solRow = r => ({ 'Fecha reserva': r.fecha, 'Día': fmtDate(r.fecha), 'Tipo': r.tipo === 'evento' ? 'Cotización evento' : 'Reserva', 'Estado': EST_TXT[r.estado] || r.estado, 'Cliente': r.nombre, 'WhatsApp': r.telefono, 'Actividad': r.actividad || '', 'Personas': r.personas || '', 'Servicios': r.servicios || '', 'Observaciones': r.observaciones || '', 'Gestionado por': r.gestionado_por || '', 'Recibida': fmtTS(r.creado) });
   const cols = [12,30,16,11,28,16,22,9,26,34,14,16];
+  if (B.pagos) { const pr = B.pagos.map(p => { const ab = sumAb(p); return { 'Fecha': p.fecha, 'Día': fmtDate(p.fecha), 'Cliente': p.cliente || '', 'Personas': p.personas || '', 'Incluye': p.incluye || '', 'Valor total': Number(p.total)||0, 'Abonado': ab, 'Saldo pendiente': Math.max(0, (Number(p.total)||0) - ab), 'Detalle abonos': (p.abonos||[]).map(x => `${x.fecha}: $${Number(x.monto).toLocaleString('es-CL')}${x.medio ? ' (' + x.medio + ')' : ''}`).join(' | '), 'Notas': p.notas || '' }; });
+    const tt = pr.reduce((s,x) => s + x['Valor total'], 0), ta = pr.reduce((s,x) => s + x['Abonado'], 0); pr.push({}); pr.push({ 'Cliente': 'TOTALES', 'Valor total': tt, 'Abonado': ta, 'Saldo pendiente': pr.reduce((s,x) => s + (x['Saldo pendiente']||0), 0) });
+    add('Pagos', pr, [12,30,30,9,34,14,14,15,50,34]); }
   add('Reservas aceptadas', B.sol.filter(r => r.estado === 'aceptada').map(solRow), cols);
   add('Todas las solicitudes', B.sol.map(solRow), cols);
   // Una hoja por mes con las fechas ocupadas
@@ -1059,9 +1068,9 @@ const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 async function admLoad(force){
   if (!(SB && ADMIN)) { ADM.sol = db.requests.map(r => ({ id:String(r.id), nombre:r.name, fecha:r.date, actividad:r.detail, personas:r.count, telefono:r.phone, estado:({Pendiente:'pendiente', Confirmado:'aceptada', Rechazado:'rechazada', Cotizado:'cotizada'})[r.status] || 'pendiente', creado:new Date(r.id).toISOString(), tipo:r.kind === 'Evento' ? 'evento' : 'reserva', observaciones:r.note, local:true })); ADM.fechas = Object.entries(db.days).filter(([,s]) => s === 'booked').map(([f]) => ({ fecha:f })); return ADM; }
   if (!force && Date.now() - ADM.loaded < 4000) return ADM;
-  const [s, f] = await Promise.all([ SB.from('solicitudes').select('*').order('creado', {ascending:false}).limit(500), SB.from('fechas_bloqueadas').select('*').order('fecha') ]);
+  const [s, f, pg] = await Promise.all([ SB.from('solicitudes').select('*').order('creado', {ascending:false}).limit(500), SB.from('fechas_bloqueadas').select('*').order('fecha'), SB.from('pagos').select('*').order('fecha') ]);
   if (s.error) throw s.error; if (f.error) throw f.error;
-  ADM.sol = s.data; ADM.fechas = f.data; ADM.loaded = Date.now();
+  ADM.sol = s.data; ADM.fechas = f.data; ADM.pagos = pg.error ? null : pg.data; ADM.pagosErr = pg.error ? pg.error.message : ''; ADM.loaded = Date.now();
   f.data.forEach(x => RESERVADAS.add(x.fecha));
   const n = s.data.filter(r => r.estado === 'pendiente').length; $('reqBadge').hidden = !n; $('reqBadge').textContent = n;
   return ADM;
@@ -1098,6 +1107,7 @@ async function reqAction(rid, act, after){
     }
     let { error } = await SB.from('solicitudes').update({ estado: act, gestionado_por: ADMIN }).eq('id', r.id);
     if (!error && act === 'aceptada'){ const x = await SB.from('fechas_bloqueadas').upsert({ fecha: r.fecha, solicitud: r.id }); error = x.error; if (!error) { RESERVADAS.add(r.fecha); calendar(); homeCal(); } }
+    if (!error && act === 'aceptada') await SB.from('pagos').upsert({ fecha: r.fecha, cliente: r.nombre, telefono: r.telefono, personas: r.personas || 0, incluye: [r.actividad, r.servicios].filter(Boolean).join(' · ') || null, solicitud: r.id, actualizado_por: ADMIN }, { onConflict:'fecha', ignoreDuplicates:true });
     toast(error ? 'No se pudo guardar: ' + error.message : ({aceptada:'Aceptada: la fecha quedó bloqueada ✔', rechazada:'Solicitud rechazada', cotizada:'Marcada como cotizada'})[act]);
     await admLoad(true); after();
     if (!error && act === 'aceptada') setTimeout(() => modal({ title:'Reserva aceptada ✔', text:`${r.nombre} · ${fmtDate(r.fecha)}. ¿Quieres guardar ahora el Excel de respaldo actualizado?`,
@@ -1141,6 +1151,7 @@ async function adminHome(c){
       ${K(prox, 'Próximos eventos', 'en los próximos 30 días', 'm-cal', 'k-bl', 'cal')}
       ${K(delMes, 'Total', 'reservas este mes', 'm-users', 'k-yl', 'cal')}
     </div>
+    ${pagosCard(A)}
     <section class="adm-card"><div class="tiles2">
       ${T('requests','solicitudes','Solicitudes', pend)}${T('cal','calendario','Calendario')}${T('plans','planes_precios','Planes y precios')}${T('memories','fotos_mural','Fotos y mural')}
       ${T('receipt','comprobantes','Comprobantes')}${T('backup','respaldo','Respaldo')}${T('pending','datos_pendientes','Datos pendientes')}${T('config','configuracion','Configuración')}
@@ -1217,6 +1228,93 @@ function dayDetail(k, after){
     confirmBox('¿Desbloquear esta fecha?', `${fmtDate(k)} volverá a aparecer disponible${st.conf ? '. La reserva de ' + st.conf.nombre + ' seguirá registrada como confirmada' : ''}. Queda registrado en Respaldo.`, async () => {
       const { error } = await SB.from('fechas_bloqueadas').delete().eq('fecha', k);
       if (!error) { RESERVADAS.delete(k); calendar(); homeCal(); } toast(error ? 'No se pudo: ' + error.message : 'Fecha desbloqueada (recuperable en Respaldo)'); await admLoad(true); after(); }); };
+}
+
+
+/* --- Pagos --- */
+const sumAb = p => (p.abonos || []).reduce((s,x) => s + (Number(x.monto)||0), 0);
+function pagosRows(A){
+  const byF = new Map((A.pagos || []).map(p => [p.fecha, { ...p, _reg:true }]));
+  A.fechas.forEach(f => { if (!byF.has(f.fecha)) { const s = A.sol.find(x => x.id === f.solicitud); byF.set(f.fecha, { fecha:f.fecha, cliente: s ? s.nombre : '', telefono: s ? s.telefono : '', personas: s ? s.personas : 0, incluye: s ? s.actividad : '', total:0, abonos:[], solicitud: f.solicitud || null, _reg:false }); } });
+  return [...byF.values()].sort((a,b) => a.fecha.localeCompare(b.fecha));
+}
+function pagosTotals(rows){ const t = rows.reduce((s,p) => s + (Number(p.total)||0), 0), ab = rows.reduce((s,p) => s + sumAb(p), 0); return { t, ab, falta: Math.max(0, rows.reduce((s,p) => s + Math.max(0, (Number(p.total)||0) - sumAb(p)), 0)), sinMonto: rows.filter(p => !Number(p.total)).length, conSaldo: rows.filter(p => Number(p.total) && sumAb(p) < Number(p.total)).length }; }
+const money = n => clp(n) || '$0';
+function pagosCard(A){
+  if (!(SB && ADMIN)) return '';
+  if (!A.pagos) return `<section class="adm-card pg-card"><div class="ac-h"><h3>Resumen de pagos</h3></div><p class="tiny">${/pagos/.test(A.pagosErr) ? 'Falta ejecutar <b>supabase_pagos.sql</b> en Supabase para activar los pagos.' : 'No se pudieron cargar los pagos.'}</p></section>`;
+  const T = pagosTotals(pagosRows(A).filter(p => p.fecha >= iso(today))), pct = T.t ? Math.round(T.ab / T.t * 100) : 0;
+  return `<section class="adm-card pg-card" data-tab="pagos" role="button" tabindex="0"><div class="ac-h"><h3>Resumen de pagos</h3><span class="lnk">Ver detalle ›</span></div>
+    <div class="pg-sum"><div><small>Total reservas próximas</small><b>${money(T.t)}</b></div><div class="ok"><small>Recibido</small><b>${money(T.ab)}</b></div><div class="due"><small>Por recibir</small><b>${money(T.falta)}</b></div></div>
+    <div class="bar"><i style="width:${pct}%"></i></div><p class="tiny" style="margin:6px 0 0">${pct}% recibido · ${T.conSaldo} reserva(s) con saldo${T.sinMonto ? ` · ${T.sinMonto} sin monto registrado` : ''}</p></section>`;
+}
+let pagF = 'prox';
+async function adminPagos(c){
+  c.innerHTML = '<div class="mem-skel"></div>';
+  if (!(SB && ADMIN)) { c.innerHTML = '<p class="mem-err">Los pagos requieren la conexión a la base de datos.</p>'; return; }
+  let A; try { A = await admLoad(true); } catch (e) { return admErr(c, e); }
+  if (!A.pagos) { c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Pagos</h3></div><p class="mem-err">${/pagos/.test(A.pagosErr) ? 'Falta ejecutar supabase_pagos.sql en Supabase (SQL Editor → Run).' : 'No se pudieron cargar los pagos: ' + esc(A.pagosErr)}</p>`; return; }
+  const all = pagosRows(A), hoy = iso(today);
+  const F = { prox: p => p.fecha >= hoy, saldo: p => Number(p.total) && sumAb(p) < Number(p.total), pagadas: p => Number(p.total) && sumAb(p) >= Number(p.total), sin: p => !Number(p.total), todas: () => true };
+  const scope = pagF === 'todas' ? all : all.filter(p => pagF === 'prox' ? F.prox(p) : F.prox(p) && F[pagF](p));
+  const T = pagosTotals(scope), pct = T.t ? Math.round(T.ab / T.t * 100) : 0;
+  c.innerHTML = `<div class="ac-h"><h3 class="pg-t">Pagos</h3></div>
+    <section class="adm-card"><div class="pg-sum big"><div><small>Total en reservas</small><b>${money(T.t)}</b></div><div class="ok"><small>He recibido</small><b>${money(T.ab)}</b></div><div class="due"><small>Me falta por recibir</small><b>${money(T.falta)}</b></div></div>
+      <div class="bar"><i style="width:${pct}%"></i></div><p class="tiny" style="margin:6px 0 0">${pct}% recibido · ${scope.length} reserva(s)${T.sinMonto ? ` · ${T.sinMonto} sin monto` : ''}${pagF === 'todas' ? ' · incluye reservas pasadas' : ''}</p></section>
+    <div class="segs">${[['prox','Próximas'],['saldo','Con saldo'],['pagadas','Pagadas'],['sin','Sin monto'],['todas','Todas']].map(([k,v]) => `<button type="button" data-pf="${k}" aria-pressed="${k===pagF}">${v}<b>${(k==='todas' ? all : all.filter(p => k==='prox' ? F.prox(p) : F.prox(p) && F[k](p))).length}</b></button>`).join('')}</div>
+    <div class="pgl">${scope.length ? scope.map(p => { const ab = sumAb(p), t = Number(p.total)||0, fal = Math.max(0, t - ab), pc = t ? Math.min(100, Math.round(ab/t*100)) : 0;
+      return `<button type="button" class="pgi${fal === 0 && t ? ' done' : ''}" data-pg="${p.fecha}">
+        <span class="pgi-d">${mDay(p.fecha)}</span>
+        <span class="pgi-b"><b>${esc(p.cliente || 'Sin nombre')}</b><small>${p.personas ? esc(p.personas) + ' pers. · ' : ''}${esc(p.incluye || (p._reg ? '' : 'Sin datos de pago'))}</small>
+          <span class="bar sm"><i style="width:${pc}%"></i></span>
+          <span class="pgi-n"><span>Total <b>${t ? money(t) : '—'}</b></span><span class="ok">Abonado <b>${money(ab)}</b></span><span class="due">Falta <b>${t ? money(fal) : '—'}</b></span></span></span>
+      </button>`; }).join('') : '<p class="muted ac-empty">No hay reservas en esta lista.</p>'}</div>`;
+  c.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => { pagF = b.dataset.pf; adminPagos(c); });
+  c.querySelectorAll('[data-pg]').forEach(b => b.onclick = () => pagoEdit(all.find(p => p.fecha === b.dataset.pg), () => adminPagos(c)));
+}
+const mDay = f => { const [y,m,d] = f.split('-').map(Number); const dt = new Date(y,m-1,d); return `<b>${String(d).padStart(2,'0')}</b><span>${dt.toLocaleDateString('es-CL',{month:'short'}).replace('.','').toUpperCase()}</span><small>${y}</small>`; };
+function pagoEdit(p, after){
+  const P = { ...p, abonos: (p.abonos || []).map(x => ({...x})) };
+  const body = $('adDayBody');
+  const draw = () => {
+    const ab = sumAb(P), t = Number(P.total)||0;
+    body.innerHTML = `<h3 id="adTitle">Pagos · ${esc(fmtDate(P.fecha))}</h3>
+      <div class="form rform pg-form">
+        <label>Cliente<input id="pgC" maxlength="120" value="${esc(P.cliente || '')}"></label>
+        <div class="row2"><label>Personas<input id="pgP" type="number" min="0" inputmode="numeric" value="${esc(P.personas || '')}"></label><label>Valor total<span class="money"><i>$</i><input id="pgT" type="number" min="0" step="1000" inputmode="numeric" value="${t || ''}" placeholder="0"></span></label></div>
+        <label>Incluye<textarea id="pgI" rows="2" maxlength="600">${esc(P.incluye || '')}</textarea></label>
+        <div class="blk-h"><h4>Abonos</h4><button type="button" class="chip-btn" id="pgAdd">+ Agregar</button></div>
+        <div class="abonos">${P.abonos.length ? P.abonos.map((x,i) => `<div class="abcard"><div class="ab-top"><span class="ab-n">Abono ${i+1}</span><button type="button" class="ab-del" data-pdel="${i}" aria-label="Eliminar abono ${i+1}"><svg><use href="#i-trash"/></svg></button></div>
+          <label class="ab-f">Fecha<input type="date" data-pa="${i}" data-k="fecha" value="${esc(x.fecha || '')}"></label>
+          <div class="ab-row"><label class="ab-f">Monto<span class="money"><i>$</i><input type="number" min="0" step="1000" inputmode="numeric" data-pa="${i}" data-k="monto" value="${esc(x.monto || '')}"></span></label><label class="ab-f">Medio<input data-pa="${i}" data-k="medio" list="rMedios2" maxlength="60" value="${esc(x.medio || '')}" placeholder="Transferencia"></label></div></div>`).join('') : '<p class="tiny">Sin abonos.</p>'}</div>
+        <datalist id="rMedios2"><option value="Transferencia"><option value="Efectivo"><option value="Depósito"><option value="Tarjeta"></datalist>
+        <div class="totals" id="pgTot"></div>
+        <label>Notas<textarea id="pgN" rows="2" maxlength="600">${esc(P.notas || '')}</textarea></label>
+        <button type="button" class="btn2 primary full" id="pgSave">Guardar pagos</button>
+        <button type="button" class="btn2 ghost full" id="pgRc">🧾 Generar comprobante</button>
+      </div>`;
+    enhanceDates(body);
+    const tot = () => { const ab2 = sumAb(P), t2 = Number(P.total)||0; $('pgTot').innerHTML = `<div class="tot-row"><span>Valor total</span><b>${t2 ? money(t2) : '—'}</b></div><div class="tot-row ok"><span>Total abonado</span><b>${money(ab2)}</b></div><div class="tot-row due"><span>Saldo pendiente</span><b>${t2 ? money(Math.max(0, t2 - ab2)) : 'Por definir'}</b></div>`; };
+    const bind = (id, k, num) => $(id).addEventListener('input', () => { P[k] = num ? Number($(id).value) || 0 : $(id).value; tot(); });
+    bind('pgC','cliente'); bind('pgP','personas',1); bind('pgT','total',1); bind('pgI','incluye'); bind('pgN','notas');
+    body.querySelectorAll('[data-pa]').forEach(inp => { const h = () => { P.abonos[+inp.dataset.pa][inp.dataset.k] = inp.dataset.k === 'monto' ? Number(inp.value) || 0 : inp.value; tot(); }; inp.addEventListener('input', h); inp.addEventListener('change', h); });
+    body.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { P.abonos.splice(+b.dataset.pdel, 1); draw(); });
+    $('pgAdd').onclick = () => { P.abonos.push({ fecha: iso(today), monto: 0, medio: '' }); draw(); };
+    $('pgSave').onclick = async () => {
+      const row = { fecha:P.fecha, cliente:(P.cliente||'').trim() || null, telefono:P.telefono || null, personas:Number(P.personas)||0, horario:P.horario || null, incluye:(P.incluye||'').trim() || null, notas:(P.notas||'').trim() || null, total:Number(P.total)||0, abonos:P.abonos.filter(x => Number(x.monto) > 0), solicitud:P.solicitud || null, actualizado:new Date().toISOString(), actualizado_por:ADMIN };
+      $('pgSave').disabled = true;
+      const { error } = await SB.from('pagos').upsert(row, { onConflict:'fecha' });
+      $('pgSave').disabled = false;
+      if (error) return toast('No se pudo guardar: ' + error.message);
+      toast('Pagos guardados ✔'); closeDlg($('admDay')); ADM.loaded = 0; after();
+    };
+    $('pgRc').onclick = () => { closeDlg($('admDay'));
+      Object.assign(rcpt, { cliente: P.cliente || '', fecha: P.fecha, horario: P.horario || '', personas: String(P.personas || ''), incluye: P.incluye || '', total: String(Number(P.total) || ''), plan: '', auto: false, extras: {}, abonos: P.abonos.filter(x => Number(x.monto) > 0).map(x => ({ fecha: x.fecha, monto: String(x.monto), medio: x.medio || '' })) });
+      if (!rcpt.abonos.length) rcpt.abonos = [{ fecha: iso(today), monto: '', medio: '' }];
+      admGo('receipt'); toast('Datos cargados desde Pagos ✔'); };
+    tot();
+  };
+  draw(); openDlg($('admDay'));
 }
 
 /* --- Planes y precios / Configuración --- */
