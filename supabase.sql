@@ -77,3 +77,76 @@ insert into public.fechas_bloqueadas (fecha) values
   ('2026-12-17'), ('2026-12-19'), ('2026-12-25'),
   ('2027-01-03')
 on conflict (fecha) do nothing;
+
+-- =====================================================================
+-- 6) Mural «Historias que quedan»: recuerdos de visitantes con fotos
+-- =====================================================================
+create table if not exists public.recuerdos (
+  id uuid primary key default gen_random_uuid(),
+  creado timestamptz not null default now(),
+  nombre text not null check (char_length(nombre) between 2 and 80),
+  fecha_visita date check (fecha_visita <= current_date),
+  categoria text not null default 'familia' check (categoria in ('familia','cumpleanos','matrimonio','curso','otro')),
+  mensaje text not null check (char_length(mensaje) between 5 and 300),
+  fotos text[] not null default '{}' check (cardinality(fotos) <= 5),
+  consentimiento boolean not null check (consentimiento),
+  aparecen_menores boolean not null default false,
+  consentimiento_tutor boolean not null default false,
+  huella text not null unique,                       -- evita publicaciones duplicadas
+  estado text not null default 'pendiente' check (estado in ('pendiente','aprobado','rechazado')),
+  destacado boolean not null default false,
+  me_encanta int not null default 0 check (me_encanta >= 0),
+  revisado_por text,
+  constraint fotos_requieren_consentimiento check (not aparecen_menores or consentimiento_tutor)
+);
+create index if not exists recuerdos_estado_idx on public.recuerdos (estado, creado desc);
+alter table public.recuerdos enable row level security;
+
+-- Público: enviar recuerdos (quedan pendientes) y ver solo los aprobados
+drop policy if exists rec_insert on public.recuerdos;
+create policy rec_insert on public.recuerdos for insert to anon, authenticated
+  with check (estado = 'pendiente' and not destacado and me_encanta = 0 and revisado_por is null);
+drop policy if exists rec_public_select on public.recuerdos;
+create policy rec_public_select on public.recuerdos for select to anon, authenticated using (estado = 'aprobado' or public.es_admin());
+drop policy if exists rec_admin_update on public.recuerdos;
+create policy rec_admin_update on public.recuerdos for update to authenticated using (public.es_admin()) with check (public.es_admin());
+drop policy if exists rec_admin_delete on public.recuerdos;
+create policy rec_admin_delete on public.recuerdos for delete to authenticated using (public.es_admin());
+
+-- Antispam: máximo 2 recuerdos por nombre cada 24 h y 20 pendientes nuevos por hora en total
+create or replace function public.recuerdos_antispam() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if (select count(*) from public.recuerdos where lower(nombre) = lower(new.nombre) and creado > now() - interval '24 hours') >= 2 then
+    raise exception 'Ya recibimos recuerdos de este grupo hoy. Inténtalo mañana.';
+  end if;
+  if (select count(*) from public.recuerdos where estado = 'pendiente' and creado > now() - interval '1 hour') >= 20 then
+    raise exception 'Estamos recibiendo muchos recuerdos. Inténtalo en un rato.';
+  end if;
+  return new;
+end $$;
+drop trigger if exists recuerdos_antispam on public.recuerdos;
+create trigger recuerdos_antispam before insert on public.recuerdos for each row execute function public.recuerdos_antispam();
+
+-- «Me encanta»: suma o resta 1, solo en recuerdos aprobados
+create or replace function public.me_encanta(p_id uuid, p_delta int) returns int
+language sql security definer set search_path = public as $$
+  update public.recuerdos set me_encanta = greatest(0, me_encanta + case when p_delta > 0 then 1 else -1 end)
+  where id = p_id and estado = 'aprobado' returning me_encanta;
+$$;
+grant execute on function public.me_encanta(uuid, int) to anon, authenticated;
+
+-- Almacenamiento de fotos (privado): JPEG/WebP de hasta 2 MB
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('recuerdos', 'recuerdos', false, 2097152, array['image/jpeg','image/webp'])
+on conflict (id) do update set public = false, file_size_limit = 2097152, allowed_mime_types = array['image/jpeg','image/webp'];
+
+drop policy if exists rec_fotos_insert on storage.objects;
+create policy rec_fotos_insert on storage.objects for insert to anon, authenticated
+  with check (bucket_id = 'recuerdos' and (storage.foldername(name))[1] = 'pendientes');
+-- Las fotos solo se pueden ver si pertenecen a un recuerdo aprobado (o si eres administrador)
+drop policy if exists rec_fotos_select on storage.objects;
+create policy rec_fotos_select on storage.objects for select to anon, authenticated
+  using (bucket_id = 'recuerdos' and (public.es_admin() or exists (select 1 from public.recuerdos r where r.estado = 'aprobado' and storage.objects.name = any (r.fotos))));
+drop policy if exists rec_fotos_delete on storage.objects;
+create policy rec_fotos_delete on storage.objects for delete to authenticated using (bucket_id = 'recuerdos' and public.es_admin());

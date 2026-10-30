@@ -309,14 +309,6 @@ $('eventForm').addEventListener('submit', e => {
   sbSend({tipo:'evento', fecha:r.date, actividad:$('etype').value, personas:+r.count||null, nombre:r.name, telefono:r.phone, servicios:services.join(', ') || null, observaciones:r.note || null});
   sendWhatsApp('Cotización de evento lista', msg);
 });
-$('wallForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (!check([['wname',req],['wmessage',req]])) return;
-  if (!$('wconsent').checked) { toast('Debes autorizar la publicación para enviar.'); return; }
-  db.memories.push({id:Date.now(), name:$('wname').value.trim(), message:$('wmessage').value.trim(), status:'Pendiente', photo:''});
-  save(); $('wallForm').reset(); renderAdmin();
-  modal({title:'¡Gracias por tu recuerdo! 💛', text:'Quedó pendiente de revisión. En esta demo se guarda solo en este navegador; para recibirlo de verdad se necesita conectar un servidor.', actions:[{label:'Cerrar', cls:'pink'}]});
-});
 document.addEventListener('input', e => { if (e.target.classList.contains('invalid')) { e.target.classList.remove('invalid'); e.target.removeAttribute('aria-invalid'); } });
 
 /* ---------- Condiciones de reserva ---------- */
@@ -327,11 +319,6 @@ function policies(){
 }
 
 /* ---------- Mural ---------- */
-function wall(){
-  const ok = db.memories.filter(x => x.status === 'Aprobado');
-  $('wall').innerHTML = ok.length ? ok.map(x => `<article class="memory">${x.photo ? `<img src="${esc(x.photo)}" alt="Recuerdo de ${esc(x.name)}">` : '<div class="ph" aria-hidden="true">☀️</div>'}<h3>${esc(x.name)} ♥</h3><p>“${esc(x.message)}”</p></article>`).join('')
-    : '<div class="card empty"><h3>💛 Aquí comenzará nuestra historia</h3><p class="muted" style="margin:0">Pronto compartiremos los recuerdos de las familias que nos visitan.</p></div>';
-}
 
 /* ---------- Contacto ---------- */
 function contact(){
@@ -398,10 +385,8 @@ function renderAdmin(){
     $('aPhotos').onclick = () => { c.querySelectorAll('[data-name]').forEach(i => db.photos[+i.dataset.name].titulo = i.value); save(); gallery(); toast('Títulos guardados'); };
     $('aReset').onclick = () => confirmBox('¿Restaurar fotos?', 'Se volverá a la galería original.', () => { db.photos = D.galeria.map(p => ({...p})); save(); gallery(); renderAdmin(); });
   }
-  if (tab === 'memories'){
-    c.innerHTML = '<h3>Moderar mural de visitantes</h3><p class="tiny">Antes de publicar fotografías, verifica la autorización de todas las personas y del tutor cuando aparezcan menores.</p>' + (db.memories.length ? db.memories.map(m => `<div class="adminRow"><div><b>${esc(m.name)}</b><p>${esc(m.message)}</p><span class="tiny">${esc(m.status)}</span></div><div><button class="mini" data-m="${m.id}" data-a="Aprobado">Aprobar</button><button class="mini danger" data-m="${m.id}" data-a="Rechazado">Rechazar</button><button class="mini danger" data-m="${m.id}" data-a="Eliminado">Eliminar</button></div></div>`).join('') : '<p class="muted">Sin recuerdos pendientes.</p>');
-    c.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { const m = db.memories.find(x => x.id === +b.dataset.m); if (!m) return; if (b.dataset.a === 'Eliminado') db.memories = db.memories.filter(x => x !== m); else m.status = b.dataset.a; save(); wall(); renderAdmin(); });
-  }
+  if (tab === 'memories'){ memAdmin(c); return; }
+
   if (tab === 'pending'){
     const p = pendingFields();
     c.innerHTML = `<h3>Datos pendientes de confirmar (${p.length})</h3><p class="muted">Estos campos se muestran como «Por confirmar». Se editan en <code>data.js</code> (o en Precios).</p><ul class="pendlist">${p.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
@@ -447,31 +432,39 @@ function calc(){
 }
 
 function receiptForm(c){
-  c.innerHTML = `<h3>Comprobante de reserva</h3>
-    <p class="muted">Elige una solicitud aceptada para rellenar los datos, o complétalos a mano.</p>
+  c.innerHTML = `<div class="rc-head">${ico('m-sparkle','pink','hmi')}<div><h3>Comprobante de reserva</h3><p class="muted">Rellena desde una solicitud aceptada o completa los datos.</p></div></div>
     <div class="recent" id="rRecent"></div>
     <div class="form rform">
-      <label>Cliente<input id="rCliente" maxlength="80" placeholder="Nombre del cliente o curso"></label>
-      <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" list="rHorList" placeholder="Elige o escribe"></label></div>
-      <datalist id="rHorList"><option value="9:30 a 20:00"><option value="Full day"><option value="Día completo"><option value="Horario a acordar"></datalist>
-      <div class="row2"><label>Plan<select id="rPlan"><option value="">— Elegir plan —</option>${PL.planes.map((p,i) => `<option value="${i}">${esc(p.nombre)}</option>`).join('')}<option value="otro">Otro / personalizado</option></select></label>
-        <label>Personas<input id="rPersonas" type="number" min="0" inputmode="numeric"></label></div>
-      <fieldset><legend>Adicionales</legend><div class="extras">${PL.extras.map((x,i) => x.tipo === 'unidad'
-        ? `<label class="xrow"><span>${esc(x.nombre)}</span><input type="number" min="0" inputmode="numeric" data-x="${i}" placeholder="Cantidad"></label>`
-        : `<label class="check"><input type="checkbox" data-x="${i}"> ${esc(x.nombre)}</label>`).join('')}</div></fieldset>
-      <label class="check autosw"><input type="checkbox" id="rAuto"> Calcular el valor automáticamente</label>
-      <div class="row2"><label>Valor total (CLP)<input id="rTotal" type="number" min="0" step="1000" inputmode="numeric" placeholder="Opcional"></label><span></span></div>
-      <label>Incluye<textarea id="rIncluye" rows="3" maxlength="400" placeholder="Ej: Pack full day: 34 personas"></textarea></label>
-      <fieldset><legend>Abonos</legend><div id="rAbonos"></div><button type="button" class="mini" id="rAddAb">+ Agregar abono</button></fieldset>
-      <p class="rsum" id="rSum"></p>
-      <button type="button" class="btn pink full" id="rGen">Generar comprobante</button>
-      <details class="planed"><summary>⚙️ Mis planes y precios</summary><div id="rPlanes"></div></details>
+      <section class="rc-blk"><h4>${ico('m-users','pink','smi')}Cliente y reserva</h4>
+        <label>Cliente<input id="rCliente" maxlength="80" placeholder="Nombre del cliente o curso" autocomplete="off"></label>
+        <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" list="rHorList" placeholder="Elige o escribe"></label></div>
+        <datalist id="rHorList"><option value="9:30 a 20:00"><option value="Full day"><option value="Día completo"><option value="Horario a acordar"></datalist>
+        <div class="row2"><label>Plan<select id="rPlan"><option value="">— Elegir plan —</option>${PL.planes.map((p,i) => `<option value="${i}">${esc(p.nombre)}</option>`).join('')}<option value="otro">Otro / personalizado</option></select></label>
+          <label>Personas<input id="rPersonas" type="number" min="0" inputmode="numeric" placeholder="0"></label></div>
+      </section>
+      <section class="rc-blk"><h4>${ico('m-balloons','lav','smi')}Adicionales</h4>
+        <div class="extras">${PL.extras.map((x,i) => x.tipo === 'unidad'
+          ? `<label class="xrow"><span>${esc(x.nombre)}</span><input type="number" min="0" inputmode="numeric" data-x="${i}" placeholder="Cant."></label>`
+          : `<label class="psel"><input type="checkbox" data-x="${i}"><span>${esc(x.nombre)}</span></label>`).join('') || '<p class="tiny">Sin adicionales. Agrégalos en «Mis planes y precios».</p>'}</div>
+      </section>
+      <section class="rc-blk"><h4>${ico('m-cal','teal','smi')}Valor</h4>
+        <label class="switch"><input type="checkbox" id="rAuto"><span class="sw" aria-hidden="true"></span><span>Calcular automáticamente</span></label>
+        <label>Valor total (CLP)<span class="money"><i>$</i><input id="rTotal" type="number" min="0" step="1000" inputmode="numeric" placeholder="0"></span></label>
+        <label>Incluye<textarea id="rIncluye" rows="3" maxlength="400" placeholder="Ej: Pack full day: 34 personas"></textarea></label>
+      </section>
+      <section class="rc-blk"><div class="blk-h"><h4>${ico('m-wa','green','smi')}Abonos</h4><button type="button" class="chip-btn" id="rAddAb">+ Agregar</button></div>
+        <div id="rAbonos" class="abonos"></div>
+        <div class="totals" id="rSum" aria-live="polite"></div>
+      </section>
+      <button type="button" class="btn2 primary full" id="rGen"><svg><use href="#m-sparkle"/></svg>Generar comprobante</button>
+      <details class="planed"><summary>${ico('m-star','yellow','smi')}<span>Mis planes y precios</span><svg class="chev"><use href="#i-chev"/></svg></summary><div id="rPlanes"></div></details>
     </div>
     <div id="rOut" class="rout" hidden>
+      <h4 class="rout-h">Vista previa</h4>
       <img id="rPrev" alt="Vista previa del comprobante">
-      <div class="modal-actions">
-        <button type="button" class="btn green" id="rShare">📲 Compartir / WhatsApp</button>
-        <a class="btn outline-dark" id="rDown" download="comprobante.png" href="#">⬇ Descargar imagen</a>
+      <div class="rout-btns">
+        <button type="button" class="btn2 wa" id="rShare"><svg><use href="#m-wa"/></svg>Compartir</button>
+        <a class="btn2 ghost" id="rDown" download="comprobante.png" href="#">Descargar</a>
       </div>
       <p class="tiny" id="rMsg">Si los botones no funcionan en tu teléfono, mantén presionada la imagen y elige «Guardar imagen».</p>
     </div>`;
@@ -493,7 +486,15 @@ function receiptForm(c){
   $('rAuto').onchange = () => setAuto($('rAuto').checked);
   setAuto(rcpt.auto && rcpt.plan !== 'otro');
   const drawAb = () => {
-    $('rAbonos').innerHTML = rcpt.abonos.map((ab,i) => `<div class="abrow"><input type="date" data-ab="${i}" data-k="fecha" value="${esc(ab.fecha)}" aria-label="Fecha del abono"><input type="number" min="0" step="1000" inputmode="numeric" data-ab="${i}" data-k="monto" value="${esc(ab.monto)}" placeholder="Monto" aria-label="Monto del abono"><input data-ab="${i}" data-k="medio" value="${esc(ab.medio)}" list="rMedios" placeholder="Medio de pago" aria-label="Medio de pago" maxlength="40"><button type="button" class="mini danger" data-del-ab="${i}" aria-label="Quitar abono">✕</button></div>`).join('') + '<datalist id="rMedios"><option value="Transferencia"><option value="Efectivo"><option value="Depósito"><option value="Tarjeta"></datalist>' || '';
+    $('rAbonos').innerHTML = rcpt.abonos.length ? rcpt.abonos.map((ab,i) => `<div class="abcard">
+        <div class="ab-top"><span class="ab-n">Abono ${i+1}</span><button type="button" class="ab-del" data-del-ab="${i}" aria-label="Eliminar abono ${i+1}"><svg><use href="#i-trash"/></svg></button></div>
+        <label class="ab-f">Fecha<input type="date" data-ab="${i}" data-k="fecha" value="${esc(ab.fecha)}" aria-label="Fecha del abono ${i+1}"></label>
+        <div class="ab-row">
+          <label class="ab-f">Monto<span class="money"><i>$</i><input type="number" min="0" step="1000" inputmode="numeric" data-ab="${i}" data-k="monto" value="${esc(ab.monto)}" placeholder="0" aria-label="Monto del abono ${i+1}"></span></label>
+          <label class="ab-f">Medio de pago<select data-ab="${i}" data-k="medio" aria-label="Medio de pago del abono ${i+1}">${['', 'Transferencia', 'Efectivo', 'Depósito', 'Tarjeta'].concat(ab.medio && !['Transferencia','Efectivo','Depósito','Tarjeta'].includes(ab.medio) ? [ab.medio] : []).map(m => `<option value="${esc(m)}" ${m === (ab.medio||'') ? 'selected' : ''}>${m ? esc(m) : 'Elegir…'}</option>`).join('')}</select></label>
+        </div>
+      </div>`).join('') : '<p class="tiny ab-empty">Sin abonos registrados.</p>';
+    $('rAbonos').querySelectorAll('[data-ab]').forEach(inp => { const h = () => { rcpt.abonos[+inp.dataset.ab][inp.dataset.k] = inp.value; rSum(); }; inp.addEventListener('input', h); inp.addEventListener('change', h); });
     $('rAbonos').querySelectorAll('[data-ab]').forEach(inp => inp.addEventListener('input', () => { rcpt.abonos[+inp.dataset.ab][inp.dataset.k] = inp.value; rSum(); }));
     $('rAbonos').querySelectorAll('[data-del-ab]').forEach(b => b.onclick = () => { rcpt.abonos.splice(+b.dataset.delAb,1); drawAb(); rSum(); });
   };
@@ -563,8 +564,11 @@ function planEditor(){
 const abTotal = r => r.abonos.reduce((s,a) => s + (Number(a.monto)||0), 0);
 function rSum(){
   const el = $('rSum'); if (!el) return;
-  const tot = Number(rcpt.total)||0, ab = abTotal(rcpt);
-  el.innerHTML = `Abonado: <b>${clp(ab) || '$0'}</b>` + (tot ? ` · Saldo pendiente: <b>${clp(Math.max(0,tot-ab))}</b>` : '');
+  const tot = Number(rcpt.total)||0, ab = abTotal(rcpt), saldo = Math.max(0, tot - ab), pct = tot ? Math.min(100, Math.round(ab / tot * 100)) : 0;
+  el.innerHTML = `<div class="tot-row"><span>Valor total</span><b>${tot ? clp(tot) : '—'}</b></div>
+    <div class="tot-row ok"><span>Total abonado</span><b>${clp(ab) || '$0'}</b></div>
+    <div class="tot-row due"><span>Saldo pendiente</span><b>${tot ? clp(saldo) : 'Por definir'}</b></div>
+    ${tot ? `<div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Porcentaje pagado"><i style="width:${pct}%"></i></div><p class="tiny" style="margin:4px 0 0">${pct}% pagado${ab > tot ? ' · ⚠ los abonos superan el total' : ''}</p>` : ''}`;
 }
 const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
 function wrap(ctx, txt, maxW){ const out=[]; String(txt).split(/\n/).forEach(par => { let cur=''; par.split(' ').forEach(w => { const t = cur ? cur+' '+w : w; if (ctx.measureText(t).width > maxW && cur){ out.push(cur); cur = w; } else cur = t; }); out.push(cur); }); return out; }
@@ -706,6 +710,249 @@ async function sbDates(c){
     if (!e3) { RESERVADAS.delete(b.dataset.un); calendar(); homeCal(); } toast(e3 ? 'No se pudo: ' + e3.message : 'Fecha desbloqueada ✔'); sbDates(c); }));
 }
 
+
+/* =====================================================================
+   Mural «Historias que quedan»
+   - Con Supabase: registros en la tabla «recuerdos», fotos en Storage (bucket privado «recuerdos»).
+   - Sin Supabase: modo demostración en memoria (nada se guarda; las fotos NO van a localStorage).
+   ===================================================================== */
+const MCATS = { familia:'Familias', cumpleanos:'Cumpleaños', matrimonio:'Matrimonios', curso:'Paseos de curso', otro:'Otros' };
+const MCAT_T = { familia:'pink', cumpleanos:'lav', matrimonio:'peach', curso:'yellow', otro:'sky' };
+const MAX_PH = 5, MAX_IN = 15 * 1024 * 1024, OK_TYPES = /^image\/(jpe?g|png|webp|heic|heif)$/i, OK_EXT = /\.(jpe?g|png|webp|heic|heif)$/i;
+let MEM = [], memCat = 'todo', memShowAll = false, memPh = [], memRepIdx = -1, memOpened = 0, memView = null, memViewIdx = 0;
+const memDemo = { list: (db.memories || []).filter(m => m.status === 'Aprobado').map(m => ({ id:'d'+m.id, creado:new Date(m.id).toISOString(), nombre:m.name, mensaje:m.message, categoria:'familia', fecha_visita:null, fotos:[], urls:[], estado:'aprobado', destacado:false, me_encanta:0 })) };
+const liked = (() => { try { return new Set(JSON.parse(localStorage.getItem('quincho-liked') || '[]')); } catch { return new Set(); } })();
+const saveLiked = () => { try { localStorage.setItem('quincho-liked', JSON.stringify([...liked])); } catch {} };
+const fDate = s => s ? new Date(s.length > 10 ? s : s + 'T12:00').toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'}) : '';
+
+async function signUrls(rows){
+  const paths = [...new Set(rows.flatMap(r => r.fotos || []))];
+  if (!SB || !paths.length) return rows;
+  const { data } = await SB.storage.from('recuerdos').createSignedUrls(paths, 3600);
+  const map = new Map((data || []).filter(x => x.signedUrl).map(x => [x.path, x.signedUrl]));
+  rows.forEach(r => r.urls = (r.fotos || []).map(p => map.get(p)).filter(Boolean));
+  return rows;
+}
+async function memLoad(){
+  if (SB){
+    $('wall').innerHTML = '<div class="mem-skel"></div><div class="mem-skel"></div>';
+    const { data, error } = await SB.from('recuerdos').select('id,creado,nombre,fecha_visita,categoria,mensaje,fotos,destacado,me_encanta,estado').eq('estado','aprobado').order('creado',{ascending:false}).limit(60);
+    if (error){ $('wall').innerHTML = '<p class="mem-err">No pudimos cargar los recuerdos. Revisa tu conexión e inténtalo de nuevo.</p>'; return; }
+    MEM = await signUrls(data);
+  } else MEM = memDemo.list.filter(r => r.estado === 'aprobado');
+  memRender(); memHome();
+  $('memModo').hidden = !!SB;
+  $('memModo').textContent = 'Modo demostración: el recuerdo se verá solo en esta pestaña hasta conectar la base de datos.';
+}
+function memCard(r, i){
+  const t = MCAT_T[r.categoria] || 'pink', liked1 = liked.has(r.id);
+  return `<article class="mem" data-mi="${i}">
+    <button type="button" class="mem-open" data-open="${i}" aria-label="Ver recuerdo de ${esc(r.nombre)}">${r.urls && r.urls[0] ? `<img class="mem-ph" src="${esc(r.urls[0])}" alt="" loading="lazy" decoding="async">${r.urls.length > 1 ? `<span class="mem-more">+${r.urls.length - 1}</span>` : ''}` : `<span class="mem-noph t-${t}"><svg><use href="#m-sparkle"/></svg></span>`}</button>
+    <div class="mem-b">
+      <div class="mem-who"><span class="av t-${t}" aria-hidden="true">${esc((r.nombre.trim()[0] || '♥').toUpperCase())}</span><span><b>${esc(r.nombre)}</b><small>${esc(fDate(r.fecha_visita || r.creado))}</small></span></div>
+      <p>${esc(r.mensaje)}</p>
+      <button type="button" class="likes ${liked1 ? 'on' : ''}" data-like="${i}" aria-pressed="${liked1}" aria-label="Me encanta"><svg><use href="#i-heart"/></svg><b>${r.me_encanta || 0}</b></button>
+    </div></article>`;
+}
+function memRender(){
+  const list = MEM.filter(r => memCat === 'todo' || r.categoria === memCat);
+  const show = memShowAll ? list : list.slice(0, 6);
+  $('memAll').hidden = list.length <= 6; $('memAll').textContent = memShowAll ? 'Ver menos' : 'Ver todos';
+  $('wall').innerHTML = show.length ? show.map(r => memCard(r, MEM.indexOf(r))).join('')
+    : `<div class="mem-empty">${ico('m-sparkle','pink','bigmi')}<div><b>${MEM.length ? 'Aún no hay recuerdos en esta categoría' : 'Aquí comenzará nuestra historia'}</b><span>Sé la primera familia en dejar su recuerdo.</span></div></div>`;
+}
+function memHome(){
+  const F = MEM.filter(r => r.destacado && r.urls && r.urls.length);
+  $('homeMem').hidden = !F.length;
+  $('homeMemStrip').innerHTML = F.map(r => `<button type="button" class="scard" data-hmem="${MEM.indexOf(r)}" aria-label="Recuerdo de ${esc(r.nombre)}"><img src="${esc(r.urls[0])}" alt="" loading="lazy" decoding="async"><span class="spill"><svg class="hrt"><use href="#i-heart"/></svg>${esc(r.nombre)}</span></button>`).join('');
+}
+async function memLike(i){
+  const r = MEM[i]; if (!r) return;
+  const on = !liked.has(r.id), delta = on ? 1 : -1;
+  on ? liked.add(r.id) : liked.delete(r.id); saveLiked();
+  r.me_encanta = Math.max(0, (r.me_encanta || 0) + delta); memRender(); if (memView === r) mvPaint();
+  if (SB){ const { data, error } = await SB.rpc('me_encanta', { p_id: r.id, p_delta: delta }); if (!error && typeof data === 'number') { r.me_encanta = data; memRender(); if (memView === r) mvPaint(); } }
+}
+function mvOpen(i){ memView = MEM[i]; memViewIdx = 0; if (!memView) return; mvPaint(); openDlg($('memView')); }
+function mvPaint(){
+  const r = memView, u = r.urls || [], t = MCAT_T[r.categoria] || 'pink';
+  $('memView').classList.toggle('nophoto', !u.length);
+  if (u.length){ $('mvImg').src = u[memViewIdx]; $('mvImg').alt = `Foto ${memViewIdx+1} de ${r.nombre}`; }
+  $('mvN').textContent = u.length > 1 ? `${memViewIdx+1}/${u.length}` : '';
+  $('mvPrev').hidden = $('mvNext').hidden = u.length < 2;
+  $('mvAv').className = 'av t-' + t; $('mvAv').textContent = (r.nombre.trim()[0] || '♥').toUpperCase();
+  $('mvName').textContent = r.nombre; $('mvDate').textContent = `${MCATS[r.categoria] || ''} · ${fDate(r.fecha_visita || r.creado)}`;
+  $('mvText').textContent = r.mensaje;
+  $('mvThumbs').innerHTML = u.length > 1 ? u.map((x,k) => `<button type="button" data-th="${k}" class="${k === memViewIdx ? 'on' : ''}" aria-label="Foto ${k+1}"><img src="${esc(x)}" alt=""></button>`).join('') : '';
+  $('mvLikes').textContent = r.me_encanta || 0; $('mvLove').classList.toggle('on', liked.has(r.id)); $('mvLove').setAttribute('aria-pressed', liked.has(r.id));
+}
+
+/* --- Formulario --- */
+function memInit(){
+  $('memFilters').innerHTML = [['todo','Todos'], ...Object.entries(MCATS)].map(([k,v]) => `<button type="button" data-mc="${k}" aria-pressed="${k===memCat}">${v}</button>`).join('');
+  $('memFilters').addEventListener('click', e => { const b = e.target.closest('[data-mc]'); if (!b) return; memCat = b.dataset.mc; $('memFilters').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); memRender(); });
+  $('memAll').addEventListener('click', () => { memShowAll = !memShowAll; memRender(); });
+  $('wall').addEventListener('click', e => { const l = e.target.closest('[data-like]'); if (l) return memLike(+l.dataset.like); const o = e.target.closest('[data-open]'); if (o) mvOpen(+o.dataset.open); });
+  $('homeMemStrip').addEventListener('click', e => { const b = e.target.closest('[data-hmem]'); if (b) mvOpen(+b.dataset.hmem); });
+  $('mvPrev').addEventListener('click', () => { const n = memView.urls.length; memViewIdx = (memViewIdx - 1 + n) % n; mvPaint(); });
+  $('mvNext').addEventListener('click', () => { const n = memView.urls.length; memViewIdx = (memViewIdx + 1) % n; mvPaint(); });
+  $('mvThumbs').addEventListener('click', e => { const b = e.target.closest('[data-th]'); if (b) { memViewIdx = +b.dataset.th; mvPaint(); } });
+  $('mvLove').addEventListener('click', () => memLike(MEM.indexOf(memView)));
+  $('goMemForm').addEventListener('click', e => { e.preventDefault(); $('wallForm').scrollIntoView({behavior:'smooth', block:'start'}); setTimeout(() => $('wname').focus({preventScroll:true}), 450); });
+  $('wcat').innerHTML = Object.entries(MCATS).map(([k,v]) => `<option value="${k}">${v.replace(/s$/,'').replace('Familia','Visita familiar').replace('Paseos de curso','Paseo de curso').replace('Otro','Otro')}</option>`).join('');
+  const wd = $('wdate'); wd.max = iso(today); enhanceDates($('wallForm')); wd.dataset.max = iso(today);
+  $('wmessage').addEventListener('input', () => { const n = $('wmessage').value.length; $('wCount').textContent = `${n}/300`; $('wCount').classList.toggle('warn', n > 270); });
+  $('wallForm').addEventListener('focusin', () => { if (!memOpened) memOpened = Date.now(); }, { once:true });
+  $('phAdd').addEventListener('click', () => $('phPick').click());
+  $('phCam').addEventListener('click', () => $('phShot').click());
+  $('phPick').addEventListener('change', e => { phAddFiles([...e.target.files]); e.target.value = ''; });
+  $('phShot').addEventListener('change', e => { phAddFiles([...e.target.files]); e.target.value = ''; });
+  $('phRep').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || memRepIdx < 0) return; const item = await phPrepare(f); if (item) { URL.revokeObjectURL(memPh[memRepIdx].url); memPh[memRepIdx] = item; phPaint(); } });
+  $('phGrid').addEventListener('click', e => {
+    const d = e.target.closest('[data-phdel]'), r = e.target.closest('[data-phrep]'), add = e.target.closest('[data-phadd]');
+    if (d){ const k = +d.dataset.phdel; URL.revokeObjectURL(memPh[k].url); memPh.splice(k,1); phPaint(); }
+    else if (r){ memRepIdx = +r.dataset.phrep; $('phRep').click(); }
+    else if (add) $('phPick').click();
+  });
+  document.querySelectorAll('input[name=wmin]').forEach(x => x.addEventListener('change', () => $('tutorWrap').hidden = !document.querySelector('input[name=wmin][value=si]').checked));
+  $('wallForm').addEventListener('submit', memSubmit);
+  phPaint();
+}
+async function phPrepare(file){
+  if (!(OK_TYPES.test(file.type) || OK_EXT.test(file.name))) { toast(`«${file.name}» no es una foto compatible (JPG, PNG, WEBP o HEIC).`); return null; }
+  if (file.size > MAX_IN) { toast(`«${file.name}» pesa más de 15 MB.`); return null; }
+  try { const blob = await compress(file); return { blob, url: URL.createObjectURL(blob), w: blob._w, h: blob._h }; }
+  catch { toast(`No pudimos leer «${file.name}». Prueba con otra foto.`); return null; }
+}
+async function compress(file, maxSide = 1600, quality = .82){
+  let src, w, h;
+  try { src = await createImageBitmap(file, { imageOrientation:'from-image' }); w = src.width; h = src.height; }
+  catch { src = await loadImg(URL.createObjectURL(file)); w = src.naturalWidth; h = src.naturalHeight; }
+  const k = Math.min(1, maxSide / Math.max(w, h)), W = Math.round(w * k), H = Math.round(h * k);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,W,H); x.drawImage(src, 0, 0, W, H);
+  let q = quality, blob;
+  do { blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', q)); q -= .1; } while (blob && blob.size > 1.8 * 1024 * 1024 && q > .4);
+  if (!blob) throw new Error('compress');
+  blob._w = W; blob._h = H; return blob;
+}
+async function phAddFiles(files){
+  const room = MAX_PH - memPh.length;
+  if (room <= 0) return toast('Ya tienes 5 fotos. Elimina o reemplaza alguna.');
+  if (files.length > room) toast(`Solo se agregarán ${room} foto(s): el máximo es 5.`);
+  $('phGrid').classList.add('busy');
+  for (const f of files.slice(0, room)) { const it = await phPrepare(f); if (it) memPh.push(it); phPaint(); }
+  $('phGrid').classList.remove('busy');
+}
+function phPaint(){
+  const g = $('phGrid');
+  g.innerHTML = memPh.map((p,k) => `<div class="ph-it"><img src="${esc(p.url)}" alt="Foto ${k+1}"><button type="button" class="ph-x" data-phdel="${k}" aria-label="Eliminar foto ${k+1}">✕</button><button type="button" class="ph-r" data-phrep="${k}" aria-label="Reemplazar foto ${k+1}"><svg><use href="#i-swap"/></svg></button></div>`).join('')
+    + (memPh.length < MAX_PH ? `<button type="button" class="ph-add" data-phadd aria-label="Agregar fotos"><span>⊕</span>Agregar</button>` : '')
+    + Array.from({length: Math.max(0, MAX_PH - memPh.length - 1)}, () => '<span class="ph-slot" aria-hidden="true"><svg><use href="#m-img"/></svg></span>').join('');
+  $('phConsents').hidden = !memPh.length;
+  $('phAdd').disabled = $('phCam').disabled = memPh.length >= MAX_PH;
+}
+async function memSubmit(e){
+  e.preventDefault();
+  if ($('whp').value) return;                                   // trampa antispam (campo oculto)
+  if (memOpened && Date.now() - memOpened < 4000) return toast('Tómate un momento para escribir tu recuerdo 🙂');
+  try { const last = +localStorage.getItem('quincho-mem-last') || 0; if (Date.now() - last < 60000) return toast('Ya enviaste un recuerdo hace un momento. Espera un minuto.'); } catch {}
+  const nombre = $('wname').value.trim().replace(/\s+/g,' '), mensaje = $('wmessage').value.trim();
+  if (!check([['wname', v => v.length >= 2], ['wmessage', v => v.length >= 5 && v.length <= 300]])) return toast('Completa tu nombre y tu experiencia (5 a 300 caracteres).');
+  if (/(https?:\/\/|www\.)/i.test(mensaje)) return toast('Por seguridad, el mensaje no puede incluir enlaces.');
+  if (!$('wconsent').checked) return toast('Debes autorizar la publicación del comentario.');
+  const minors = document.querySelector('input[name=wmin]:checked');
+  if (memPh.length){
+    if (!$('wphotoOk').checked) return toast('Confirma la autorización de las personas que aparecen en las fotos.');
+    if (!minors) return toast('Indica si aparecen menores de edad en las fotos.');
+    if (minors.value === 'si' && !$('wtutor').checked) return toast('Se requiere la autorización del padre, madre o tutor para publicar fotos con menores.');
+  }
+  const huella = await sha(nombre.toLowerCase() + '|' + mensaje.toLowerCase().replace(/\s+/g,' '));
+  const row = { nombre, mensaje, fecha_visita: $('wdate').value || null, categoria: $('wcat').value, consentimiento: true, aparecen_menores: !!minors && minors.value === 'si', consentimiento_tutor: $('wtutor').checked, huella };
+  $('wSend').disabled = true; $('upProg').hidden = false; $('memOk').hidden = true;
+  const prog = (n, tot, txt) => { const p = tot ? Math.round(n / tot * 100) : 100; $('upRing').style.setProperty('--p', p); $('upPct').textContent = p + '%'; $('upTxt').textContent = txt; };
+  try {
+    await sbReady;
+    if (SB){
+      const paths = [];
+      for (let k = 0; k < memPh.length; k++){
+        prog(k, memPh.length + 1, `Subiendo foto ${k+1} de ${memPh.length}…`);
+        const path = `pendientes/${crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + k}.jpg`;
+        const { error } = await SB.storage.from('recuerdos').upload(path, memPh[k].blob, { contentType:'image/jpeg', upsert:false });
+        if (error) throw new Error('No se pudo subir una foto: ' + error.message);
+        paths.push(path);
+      }
+      prog(memPh.length, memPh.length + 1, 'Guardando recuerdo…');
+      const { error } = await SB.from('recuerdos').insert({ ...row, fotos: paths });
+      if (error) throw new Error(/huella|duplicate/i.test(error.message) ? 'Este recuerdo ya fue enviado.' : error.message);
+    } else {
+      for (let k = 0; k <= memPh.length; k++){ prog(k, memPh.length || 1, 'Preparando…'); await new Promise(r => setTimeout(r, 150)); }
+      if (memDemo.list.some(r => r.huella === huella)) throw new Error('Este recuerdo ya fue enviado.');
+      memDemo.list.unshift({ ...row, id: 'd' + Date.now(), creado: new Date().toISOString(), fotos: memPh.map((_,k) => 'demo' + k), urls: memPh.map(p => p.url), estado:'pendiente', destacado:false, me_encanta:0 });
+      memPh = memPh.map(p => ({ ...p, keep:true }));
+    }
+    prog(1, 1, '¡Listo!');
+    try { localStorage.setItem('quincho-mem-last', Date.now()); } catch {}
+    memPh.forEach(p => { if (!p.keep) URL.revokeObjectURL(p.url); }); memPh = [];
+    $('wallForm').reset(); $('wCount').textContent = '0/300'; $('tutorWrap').hidden = true; $('wdate').dispatchEvent(new Event('input')); phPaint();
+    $('upProg').hidden = true; $('memOk').hidden = false; $('memOk').scrollIntoView({behavior:'smooth', block:'center'});
+    memBadge();
+  } catch (err) {
+    $('upProg').hidden = true; toast(err.message || 'No se pudo enviar. Inténtalo de nuevo.');
+  } finally { $('wSend').disabled = false; memOpened = Date.now(); }
+}
+
+/* --- Administración: moderación y destacados --- */
+let memAdmF = 'pendiente';
+async function memAdminFetch(){
+  if (SB && ADMIN){
+    const { data, error } = await SB.from('recuerdos').select('*').order('creado',{ascending:false}).limit(200);
+    if (error) throw error; return await signUrls(data);
+  }
+  return memDemo.list;
+}
+async function memBadge(){
+  try { const L = await memAdminFetch(); const n = L.filter(r => r.estado === 'pendiente').length; $('memBadge').hidden = !n; $('memBadge').textContent = n; } catch {}
+}
+async function memAdmin(c){
+  c.innerHTML = '<h3>Mural de visitantes</h3><div class="mem-skel"></div>';
+  let L; try { L = await memAdminFetch(); } catch { c.innerHTML = '<h3>Mural de visitantes</h3><p class="mem-err">No se pudieron cargar los recuerdos.</p>'; return; }
+  const cnt = k => L.filter(r => r.estado === k).length;
+  const list = L.filter(r => r.estado === memAdmF);
+  c.innerHTML = `<div class="rc-head">${ico('m-sparkle','pink','hmi')}<div><h3>Mural de visitantes</h3><p class="muted">Solo se publican los recuerdos aprobados. Revisa texto y fotos (y la autorización si aparecen menores).</p></div></div>
+    <div class="filters" style="margin:6px 0 12px">${[['pendiente','🕒 Pendientes'],['aprobado','✅ Aprobados'],['rechazado','❌ Rechazados']].map(([k,v]) => `<button type="button" data-mf="${k}" aria-pressed="${k===memAdmF}">${v} (${cnt(k)})</button>`).join('')}</div>
+    ${!SB ? '<p class="tiny mf-modo">Modo demostración: los recuerdos de esta lista existen solo en esta pestaña.</p>' : ''}
+    <div class="madm">${list.length ? list.map(r => `<article class="madm-c">
+        <div class="madm-ph">${(r.urls || []).map((u,k) => `<button type="button" data-zoom="${esc(u)}" aria-label="Ampliar foto ${k+1}"><img src="${esc(u)}" alt=""></button>`).join('') || '<span class="tiny">Sin fotos</span>'}</div>
+        <div class="madm-b"><div class="mem-who"><span class="av t-${MCAT_T[r.categoria]||'pink'}">${esc((r.nombre[0]||'♥').toUpperCase())}</span><span><b>${esc(r.nombre)}</b><small>${esc(MCATS[r.categoria]||'')} · visita ${esc(fDate(r.fecha_visita) || 'sin fecha')} · enviado ${esc(fDate(r.creado))}</small></span></div>
+          <p>${esc(r.mensaje)}</p>
+          <div class="madm-tags">${r.aparecen_menores ? `<span class="pend">👶 Aparecen menores · ${r.consentimiento_tutor ? 'autorización del tutor ✔' : 'SIN autorización'}</span>` : ''}${(r.fotos||[]).length ? '<span class="pend">📷 Fotos autorizadas por el remitente</span>' : ''}${r.destacado ? '<span class="pend">⭐ Destacado en inicio</span>' : ''}${r.estado === 'aprobado' ? `<span class="pend">♥ ${r.me_encanta || 0}</span>` : ''}</div>
+          <div class="madm-act">${r.estado !== 'aprobado' ? `<button class="mini" data-ma="aprobado" data-id="${r.id}">Aprobar</button>` : `<button class="mini" data-ma="destacar" data-id="${r.id}">${r.destacado ? 'Quitar destacado' : '⭐ Destacar'}</button>`}${r.estado !== 'rechazado' ? `<button class="mini danger" data-ma="rechazado" data-id="${r.id}">Rechazar</button>` : ''}<button class="mini danger" data-ma="borrar" data-id="${r.id}">Eliminar</button></div></div>
+      </article>`).join('') : '<p class="muted">No hay recuerdos en esta lista.</p>'}</div>`;
+  c.querySelectorAll('[data-mf]').forEach(b => b.onclick = () => { memAdmF = b.dataset.mf; memAdmin(c); });
+  c.querySelectorAll('[data-zoom]').forEach(b => b.onclick = () => { $('vImg').src = b.dataset.zoom; $('vImg').alt = 'Foto del recuerdo'; $('vCap').textContent = ''; $('vPrev').hidden = $('vNext').hidden = true; openDlg($('viewer')); $('viewer').addEventListener('close', () => { $('vPrev').hidden = $('vNext').hidden = false; }, {once:true}); });
+  c.querySelectorAll('[data-ma]').forEach(b => b.onclick = () => {
+    const r = L.find(x => String(x.id) === b.dataset.id); if (!r) return; const act = b.dataset.ma;
+    const run = async () => {
+      let err = null; const wasDest = r.destacado;
+      if (SB && ADMIN){
+        if (act === 'borrar'){ if ((r.fotos||[]).length) await SB.storage.from('recuerdos').remove(r.fotos); ({ error: err } = await SB.from('recuerdos').delete().eq('id', r.id)); }
+        else if (act === 'destacar') ({ error: err } = await SB.from('recuerdos').update({ destacado: !r.destacado }).eq('id', r.id));
+        else ({ error: err } = await SB.from('recuerdos').update({ estado: act, revisado_por: ADMIN, destacado: act === 'aprobado' ? r.destacado : false }).eq('id', r.id));
+      } else {
+        if (act === 'borrar') memDemo.list.splice(memDemo.list.indexOf(r), 1);
+        else if (act === 'destacar') r.destacado = !r.destacado;
+        else { r.estado = act; if (act !== 'aprobado') r.destacado = false; }
+      }
+      toast(err ? 'No se pudo guardar: ' + err.message : ({aprobado:'Publicado en el mural ✔', rechazado:'Rechazado', borrar:'Eliminado', destacar: wasDest ? 'Ya no está destacado' : 'Destacado en inicio ⭐'})[act]);
+      await memLoad(); memAdmin(c); memBadge();
+    };
+    if (act === 'borrar') confirmBox('¿Eliminar este recuerdo?', 'Se borrarán el texto y sus fotos de forma permanente.', run);
+    else if (act === 'aprobado' && r.aparecen_menores && !r.consentimiento_tutor) toast('No se puede aprobar: aparecen menores sin autorización del tutor.');
+    else run();
+  });
+}
+
 /* ---------- Pestañas (rutas por #hash) ---------- */
 const VIEWS = ['inicio','instalaciones','eventos','reservas','contacto','admin'];
 const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], disponibilidad:['inicio','disponibilidad'], main:['inicio'] };
@@ -718,7 +965,7 @@ function route(){
   document.body.dataset.view = v;
   $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
-  if (v === 'admin'){ const u = SB ? ADMIN : who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); } }
+  if (v === 'admin'){ const u = SB ? ADMIN : who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); memBadge(); } }
   if (v === 'inicio') homeCal();
   revealAll();
   if (anchor) requestAnimationFrame(() => $(anchor).scrollIntoView({block:'start'}));
@@ -771,7 +1018,8 @@ function dpDraw(){
     const d = new Date(dpShown.getFullYear(), dpShown.getMonth(), n), key = iso(d);
     const b = document.createElement('button'); b.type = 'button'; b.textContent = n;
     b.className = (RESERVADAS.has(key) || db.days[key] === 'booked' ? 'booked' : '') + (dpInput && dpInput.value === key ? ' selected' : '') + (+d === +today ? ' today' : '');
-    b.disabled = !!min && key < min;
+    const max = dpInput ? dpInput.dataset.max : '';
+    b.disabled = (!!min && key < min) || (!!max && key > max);
     b.setAttribute('aria-label', fmtDate(key));
     b.addEventListener('click', () => dpPick(key));
     g.append(b);
@@ -838,6 +1086,6 @@ function homeCal(){
 }
 
 /* ---------- Inicio ---------- */
-facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); home(); rzInit(); route();
-sbReady.then(async sb => { if (!sb) return; sbLoadDates(); ADMIN = await sbAdminName(); if (curView === 'admin') route(); });
+facilities(); gallery(); events(); calendar(); prices(); policies(); memInit(); contact(); home(); rzInit(); route();
+sbReady.then(async sb => { memLoad(); if (!sb) return; sbLoadDates(); ADMIN = await sbAdminName(); if (curView === 'admin') route(); });
 })();
