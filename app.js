@@ -77,7 +77,7 @@ const revealAll = () => document.querySelectorAll('.reveal:not(.in)').forEach(el
 function facilities(){
   $('facilities').innerHTML = D.instalaciones.map((f,i) => `
     <button class="fac reveal" type="button" data-fac="${i}" aria-haspopup="dialog">
-      <span class="ico" aria-hidden="true">${f.icono}</span>
+      <span class="ico" aria-hidden="true">${f.img ? `<img src="${esc(f.img)}" alt="">` : f.icono}</span>
       <img src="${esc(f.foto)}" alt="${esc(f.titulo)}" loading="lazy" width="600" height="895">
       <div class="body"><h3>${esc(f.titulo)}</h3><p>${esc(f.texto)}</p><span class="more">Ver ficha →</span></div>
     </button>`).join('');
@@ -86,7 +86,7 @@ function facilities(){
 function openFacility(i){
   const f = D.instalaciones[i];
   $('fImg').src = f.foto; $('fImg').alt = f.titulo;
-  $('fTitle').textContent = `${f.icono} ${f.titulo}`; $('fText').textContent = f.texto;
+  $('fTitle').innerHTML = (f.img ? `<img class="ftico" src="${esc(f.img)}" alt="">` : esc(f.icono) + ' ') + esc(f.titulo); $('fText').textContent = f.texto;
   $('fList').innerHTML = Object.entries(f.detalles).filter(([,v]) => v).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
   openDlg($('facility'));
 }
@@ -114,7 +114,7 @@ $('viewer').addEventListener('touchend', e => { if (tx == null) return; const dx
 /* ---------- Eventos ---------- */
 function events(){
   const E = D.eventos;
-  $('eventHighlights').innerHTML = E.destacados.map(h => `<div class="hcard reveal">${h.foto ? `<img src="${esc(h.foto)}" alt="${esc(h.titulo)}" loading="lazy">` : ''}<div class="t"><span class="e" aria-hidden="true">${h.icono}</span><b>${esc(h.titulo)}</b><p>${esc(h.texto)}</p></div></div>`).join('');
+  $('eventHighlights').innerHTML = E.destacados.map(h => `<div class="hcard reveal">${h.foto ? `<img src="${esc(h.foto)}" alt="${esc(h.titulo)}" loading="lazy">` : ''}<div class="t">${h.img ? `<img class="himg" src="${esc(h.img)}" alt="">` : `<span class="e" aria-hidden="true">${h.icono}</span>`}<b>${esc(h.titulo)}</b><p>${esc(h.texto)}</p></div></div>`).join('');
   $('etype').innerHTML = E.tipos.map(t => `<option>${esc(t)}</option>`).join('');
   $('eservices').innerHTML = E.servicios.map(s => `<label class="check"><input type="checkbox" value="${esc(s)}"> ${esc(s)}</label>`).join('');
 }
@@ -240,7 +240,7 @@ const ACTS = D.actividades || [];
 let bAct = '', bPeople = 0;
 const PEOPLE_OPTS = [10, 20, 30, 40, 50];
 function rzInit(){
-  $('acts').innerHTML = ACTS.map(x => `<button type="button" class="act" role="radio" aria-checked="false" data-act="${esc(x.id)}">${x.svg ? `<svg class="aico" style="color:${esc(x.color||'')}"><use href="#${esc(x.svg)}"/></svg>` : `<span class="aemo" aria-hidden="true">${x.icono}</span>`}<b>${esc(x.titulo)}</b><small>${esc(x.sub)}</small></button>`).join('');
+  $('acts').innerHTML = ACTS.map(x => `<button type="button" class="act" role="radio" aria-checked="false" data-act="${esc(x.id)}">${x.img ? `<img class="aimg" src="${esc(x.img)}" alt="">` : `<span class="aemo" aria-hidden="true">${x.icono||''}</span>`}<b>${esc(x.titulo)}</b><small>${esc(x.sub)}</small></button>`).join('');
   $('acts').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; bAct = b.dataset.act; rzPaint(); });
   $('peopleChips').innerHTML = PEOPLE_OPTS.map(n => `<button type="button" role="radio" aria-checked="false" data-n="${n}">${n}</button>`).join('') + `<button type="button" role="radio" aria-checked="false" data-n="more" aria-label="Más de 50 u otra cantidad">+</button>`;
   $('peopleChips').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return;
@@ -281,6 +281,7 @@ $('bookingForm').addEventListener('submit', e => {
   const r = {id:Date.now(), kind:'Reserva', date:selected, name:$('bname').value.trim(), phone:$('bphone').value.trim(), count:bPeople, detail:actName(), note:$('bnote').value.trim(), status:'Pendiente'};
   const msg = `Hola Carla, quisiera solicitar una reserva en ${D.negocio.nombre}.\n\nFecha: ${fmtDate(r.date)}\nActividad: ${r.detail}\nPersonas: ${peopleTxt()}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nObservaciones: ${r.note || 'Sin observaciones'}\n\n¿Me confirmas disponibilidad, valor y abono?`;
   db.requests.push(r); save(); renderAdmin();
+  sbSend({tipo:'reserva', fecha:r.date, actividad:r.detail, personas:bPeople, nombre:r.name, telefono:r.phone, observaciones:r.note || null});
   sendWhatsApp('Solicitud de reserva lista', msg);
 });
 $('eventForm').addEventListener('submit', e => {
@@ -291,6 +292,7 @@ $('eventForm').addEventListener('submit', e => {
   const r = {id:Date.now(), kind:'Evento', date:$('edate').value, name:$('ename').value.trim(), phone:$('ephone').value.trim(), count:$('eguests').value, detail:$('etype').value + (services.length ? ' / ' + services.join(', ') : ''), note:$('edetails').value.trim(), status:'Pendiente'};
   const msg = `Hola Carla, quisiera cotizar un evento en ${D.negocio.nombre}.\n\nTipo: ${$('etype').value}\nFecha: ${fmtDate(r.date)}\nInvitados: ${r.count}\nServicios: ${services.join(', ') || 'Sin servicios adicionales'}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nDetalles: ${r.note || 'Sin detalles'}\n\n¿Me puedes enviar una cotización?`;
   db.requests.push(r); save(); renderAdmin();
+  sbSend({tipo:'evento', fecha:r.date, actividad:$('etype').value, personas:+r.count||null, nombre:r.name, telefono:r.phone, servicios:services.join(', ') || null, observaciones:r.note || null});
   sendWhatsApp('Cotización de evento lista', msg);
 });
 $('wallForm').addEventListener('submit', e => {
@@ -350,6 +352,8 @@ function renderAdmin(){
   document.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-selected', b.dataset.tab === tab); });
   const c = $('adminContent');
   if (tab === 'receipt'){ receiptForm(c); return; }
+  if (SB && ADMIN && tab === 'dates'){ sbDates(c); return; }
+  if (SB && ADMIN && tab === 'requests'){ sbRequests(c); return; }
   if (tab === 'dates'){
     c.innerHTML = `<h3>Habilitar o bloquear fechas</h3><p class="muted">Por defecto los días están disponibles; las fechas reservadas vienen de <code>data.js</code>. Aquí puedes ajustar días puntuales (solo en este navegador).</p>
       <div class="form"><div class="row2"><label>Fecha<input id="aDate" type="date" min="${iso(today)}"></label>
@@ -357,11 +361,12 @@ function renderAdmin(){
       <button class="btn teal" id="aSave" type="button">Guardar fecha</button><div id="aList"></div>`;
     $('aSave').onclick = () => { const d = $('aDate').value; if (!d) return toast('Elige una fecha.'); db.days[d] = $('aState').value; save(); calendar(); renderAdmin(); toast('Fecha guardada'); };
     $('aList').innerHTML = Object.entries(db.days).sort().map(([d,s]) => `<div class="adminRow"><span>${esc(fmtDate(d))} · <b>${esc(LABEL[s])}</b></span><span><button class="mini" data-edit="${d}">Editar</button><button class="mini danger" data-del="${d}">Quitar</button></span></div>`).join('');
-    c.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { $('aDate').value = b.dataset.edit; $('aState').value = db.days[b.dataset.edit]; });
+    c.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { $('aDate').value = b.dataset.edit; $('aDate').dispatchEvent(new Event('input')); $('aState').value = db.days[b.dataset.edit]; });
     c.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { delete db.days[b.dataset.del]; save(); calendar(); renderAdmin(); });
   }
   if (tab === 'requests'){
-    c.innerHTML = '<h3>Solicitudes registradas en este navegador</h3>' + (db.requests.length ? db.requests.slice().reverse().map(r => `<div class="adminRow"><div><b>${esc(r.name)}</b><p class="tiny">${esc(r.kind)} · ${esc(r.date)} · ${esc(r.count)} personas · ${esc(r.detail)}<br>WhatsApp: ${esc(r.phone)} · Estado: <b>${esc(r.status)}</b></p></div><div><button class="mini" data-id="${r.id}" data-st="Confirmado">Confirmar</button><button class="mini" data-id="${r.id}" data-st="Cotizado">Cotizado</button><button class="mini danger" data-id="${r.id}" data-st="Rechazado">Rechazar</button></div></div>`).join('') : '<p class="muted">Aún no hay solicitudes locales.</p>');
+    c.innerHTML = '<h3>Solicitudes registradas en este navegador</h3>' + (db.requests.length ? db.requests.slice().reverse().map(r => `<div class="adminRow"><div><b>${esc(r.name)}</b><p class="tiny">${esc(r.kind)} · ${esc(r.date)} · ${esc(r.count)} personas · ${esc(r.detail)}<br>WhatsApp: ${esc(r.phone)} · Estado: <b>${esc(r.status)}</b></p></div><div><button class="mini" data-id="${r.id}" data-st="Confirmado">Confirmar</button><button class="mini" data-id="${r.id}" data-st="Cotizado">Cotizado</button><button class="mini danger" data-id="${r.id}" data-st="Rechazado">Rechazar</button>${r.status === 'Confirmado' ? `<button class="mini" data-rcl="${r.id}">🧾 Comprobante</button>` : ''}</div></div>`).join('') : '<p class="muted">Aún no hay solicitudes locales.</p>');
+    c.querySelectorAll('[data-rcl]').forEach(b => b.onclick = () => { const r = db.requests.find(x => x.id === +b.dataset.rcl); if (r) prefillReceipt(normReq(r)); });
     c.querySelectorAll('[data-st]').forEach(b => b.onclick = () => {
       const r = db.requests.find(x => x.id === +b.dataset.id); if (!r) return;
       const apply = () => { if (b.dataset.st === 'Confirmado') { db.days[r.date] = 'booked'; calendar(); } r.status = b.dataset.st; save(); renderAdmin(); };
@@ -428,7 +433,8 @@ function calc(){
 
 function receiptForm(c){
   c.innerHTML = `<h3>Comprobante de reserva</h3>
-    <p class="muted">Completa los datos y genera la imagen para enviarla por WhatsApp. Los datos del cliente no se guardan.</p>
+    <p class="muted">Elige una solicitud aceptada para rellenar los datos, o complétalos a mano.</p>
+    <div class="recent" id="rRecent"></div>
     <div class="form rform">
       <label>Cliente<input id="rCliente" maxlength="80" placeholder="Nombre del cliente o curso"></label>
       <div class="row2"><label>Fecha de la reserva<input id="rFecha" type="date"></label><label>Horario<input id="rHorario" maxlength="40" list="rHorList" placeholder="Elige o escribe"></label></div>
@@ -477,7 +483,7 @@ function receiptForm(c){
     $('rAbonos').querySelectorAll('[data-del-ab]').forEach(b => b.onclick = () => { rcpt.abonos.splice(+b.dataset.delAb,1); drawAb(); rSum(); });
   };
   $('rAddAb').onclick = () => { rcpt.abonos.push({fecha:iso(today), monto:'', medio:''}); drawAb(); };
-  drawAb(); rSum(); planEditor();
+  drawAb(); rSum(); planEditor(); recentAccepted();
   $('rGen').onclick = async () => {
     if (!rcpt.cliente.trim() || !rcpt.fecha) { toast('Completa al menos el cliente y la fecha.'); (!rcpt.cliente.trim() ? $('rCliente') : $('rFecha')).focus(); return; }
     $('rGen').disabled = true; $('rGen').textContent = 'Generando…';
@@ -498,6 +504,29 @@ function receiptForm(c){
     } catch (e) { toast('No se pudo generar la imagen.'); }
     $('rGen').disabled = false; $('rGen').textContent = 'Generar comprobante';
   };
+}
+
+/* Solicitudes aceptadas recientes → rellenar comprobante */
+const normReq = r => r.nombre !== undefined
+  ? { nombre:r.nombre, fecha:r.fecha, personas:r.personas || '', actividad:[r.actividad, r.servicios].filter(Boolean).join(' · '), obs:r.observaciones || '' }
+  : { nombre:r.name, fecha:r.date, personas:r.count || '', actividad:r.detail || '', obs:r.note || '' };
+async function recentAccepted(){
+  const box = $('rRecent'); if (!box) return;
+  let list = [];
+  if (SB && ADMIN){
+    box.innerHTML = '<p class="tiny">Cargando solicitudes aceptadas…</p>';
+    const { data } = await SB.from('solicitudes').select('*').eq('estado','aceptada').order('creado', {ascending:false}).limit(6);
+    list = (data || []).map(normReq);
+  } else list = db.requests.filter(r => r.status === 'Confirmado').slice(-6).reverse().map(normReq);
+  if (!$('rRecent')) return;
+  box.innerHTML = list.length ? `<p class="flabel">Solicitudes aceptadas recientes</p><div class="recent-list">${list.map((r,i) => `<button type="button" class="rchip" data-ri="${i}"><b>${esc(r.nombre)}</b><small>📅 ${esc(fShort(r.fecha))}${r.personas ? ' · ' + esc(r.personas) + ' pers.' : ''}</small><small>${esc(r.actividad)}</small></button>`).join('')}</div>`
+    : '<p class="tiny">Cuando aceptes solicitudes, aparecerán aquí para rellenar el comprobante con un toque.</p>';
+  box.querySelectorAll('[data-ri]').forEach(b => b.onclick = () => { prefillReceipt(list[+b.dataset.ri]); });
+}
+function prefillReceipt(r){
+  Object.assign(rcpt, { cliente: r.nombre, fecha: r.fecha, personas: String(r.personas || ''), incluye: [r.actividad, r.obs].filter(Boolean).join('. '), plan: '', extras: {} });
+  tab = 'receipt'; renderAdmin(); toast('Datos cargados ✔ Revisa plan, valor y abonos.');
+  const p = $('rPlan'); if (p) p.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 function planEditor(){
@@ -582,6 +611,86 @@ async function drawReceipt(r){
 const ADM_SALT = 'quincho-agustina|', SKEY = 'quincho-admin';
 async function sha(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
 const who = () => { try { return sessionStorage.getItem(SKEY) || ''; } catch { return ''; } };
+/* ---------- Supabase (base de datos y acceso real) ---------- */
+const SBC = D.supabase || {};
+let SB = null, ADMIN = '';
+const sbReady = new Promise(res => {
+  if (!SBC.url || !SBC.anonKey) return res(null);
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.onload = () => { try { SB = window.supabase.createClient(SBC.url, SBC.anonKey); } catch { SB = null; } res(SB); };
+  s.onerror = () => res(null);
+  document.head.append(s);
+});
+async function sbLoadDates(){
+  if (!SB) return;
+  const { data, error } = await SB.from('fechas_bloqueadas').select('fecha');
+  if (error || !data) return;
+  data.forEach(x => RESERVADAS.add(x.fecha));
+  calendar(); homeCal(); if (!$('ecal').hidden) eventCal();
+}
+async function sbSend(row){
+  await sbReady; if (!SB) return;
+  try { const { error } = await SB.from('solicitudes').insert(row); if (error) console.warn('Supabase:', error.message); } catch (e) { console.warn(e); }
+}
+async function sbAdminName(){
+  if (!SB) return '';
+  const { data: { session } } = await SB.auth.getSession();
+  if (!session) return '';
+  const { data } = await SB.from('admins').select('nombre').eq('email', session.user.email.toLowerCase()).maybeSingle();
+  return data ? data.nombre : '';
+}
+const ESTADOS = { pendiente:'🕒 Pendiente', aceptada:'✅ Aceptada', rechazada:'❌ Rechazada', cotizada:'💬 Cotizada' };
+async function sbRequests(c){
+  c.innerHTML = '<h3>Solicitudes</h3><p class="muted">Cargando…</p>';
+  const { data, error } = await SB.from('solicitudes').select('*').order('creado', {ascending:false}).limit(300);
+  if (error) { c.innerHTML = '<h3>Solicitudes</h3><p class="muted">No se pudieron cargar. Revisa tu conexión.</p>'; return; }
+  const filtro = c.dataset.f || 'pendiente';
+  const list = data.filter(r => filtro === 'todas' || r.estado === filtro);
+  const count = k => data.filter(r => k === 'todas' || r.estado === k).length;
+  c.innerHTML = `<h3>Solicitudes</h3>
+    <div class="filters" style="margin:0 0 10px">${['pendiente','aceptada','cotizada','rechazada','todas'].map(k => `<button type="button" data-sf="${k}" aria-pressed="${k===filtro}">${k==='todas'?'Todas':ESTADOS[k]} (${count(k)})</button>`).join('')}</div>` +
+    (list.length ? list.map(r => `<div class="adminRow sreq"><div>
+        <b>${esc(r.nombre)}</b> <span class="pend">${r.tipo === 'evento' ? 'Cotización evento' : 'Reserva'}</span>
+        <p class="tiny">📅 <b>${esc(fmtDate(r.fecha))}</b> · ${esc(r.actividad || '')} · ${r.personas ? esc(r.personas) + ' personas' : ''}${r.servicios ? '<br>Servicios: ' + esc(r.servicios) : ''}${r.observaciones ? '<br>💬 ' + esc(r.observaciones) : ''}
+        <br><a href="https://wa.me/${esc(r.telefono.replace(/\D/g,''))}" target="_blank" rel="noopener"><b>💬 ${esc(r.telefono)}</b></a> · ${ESTADOS[r.estado] || esc(r.estado)}${r.gestionado_por ? ' por ' + esc(r.gestionado_por) : ''} · recibida ${esc(new Date(r.creado).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}))}</p></div>
+        <div>${r.estado !== 'aceptada' ? `<button class="mini" data-sid="${r.id}" data-sa="aceptada">Aceptar y bloquear fecha</button>` : ''}${r.estado === 'pendiente' ? `<button class="mini" data-sid="${r.id}" data-sa="cotizada">Cotizada</button><button class="mini danger" data-sid="${r.id}" data-sa="rechazada">Rechazar</button>` : ''}${r.estado === 'aceptada' ? `<button class="mini" data-rc="${r.id}">🧾 Comprobante</button>` : ''}<button class="mini danger" data-sid="${r.id}" data-sa="borrar">Eliminar</button></div></div>`).join('')
+      : '<p class="muted">No hay solicitudes en esta lista.</p>');
+  c.querySelectorAll('[data-sf]').forEach(b => b.onclick = () => { c.dataset.f = b.dataset.sf; sbRequests(c); });
+  c.querySelectorAll('[data-rc]').forEach(b => b.onclick = () => { const r = data.find(x => x.id === b.dataset.rc); if (r) prefillReceipt(normReq(r)); });
+  c.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => {
+    const r = data.find(x => x.id === b.dataset.sid); if (!r) return; const act = b.dataset.sa;
+    const run = async () => {
+      let err;
+      if (act === 'borrar') ({ error: err } = await SB.from('solicitudes').delete().eq('id', r.id));
+      else {
+        ({ error: err } = await SB.from('solicitudes').update({ estado: act, gestionado_por: ADMIN }).eq('id', r.id));
+        if (!err && act === 'aceptada') { const x = await SB.from('fechas_bloqueadas').upsert({ fecha: r.fecha, solicitud: r.id }); err = x.error; if (!err) { RESERVADAS.add(r.fecha); calendar(); homeCal(); } }
+      }
+      toast(err ? 'No se pudo guardar: ' + err.message : (act === 'aceptada' ? 'Aceptada: la fecha quedó bloqueada ✔' : 'Listo ✔'));
+      sbRequests(c);
+    };
+    if (act === 'aceptada') confirmBox('¿Aceptar la solicitud?', `Se bloqueará el ${fmtDate(r.fecha)} en la página para todos.`, run);
+    else if (act === 'borrar') confirmBox('¿Eliminar la solicitud?', 'Se borrará de forma permanente.', run);
+    else run();
+  });
+}
+async function sbDates(c){
+  c.innerHTML = '<h3>Fechas bloqueadas</h3><p class="muted">Cargando…</p>';
+  const { data, error } = await SB.from('fechas_bloqueadas').select('fecha').order('fecha');
+  if (error) { c.innerHTML = '<h3>Fechas bloqueadas</h3><p class="muted">No se pudieron cargar.</p>'; return; }
+  const fut = data.filter(x => x.fecha >= iso(today));
+  c.innerHTML = `<h3>Fechas bloqueadas</h3><p class="muted">Las fechas de esta lista aparecen como reservadas en la página para todos.</p>
+    <div class="form"><div class="row2"><label>Bloquear fecha<input id="sbDate" type="date" min="${iso(today)}"></label><span></span></div></div>
+    <button class="btn teal" id="sbAdd" type="button">Bloquear fecha</button>
+    <div>${fut.map(x => `<div class="adminRow"><span>${esc(fmtDate(x.fecha))}</span><button class="mini danger" data-un="${x.fecha}">Desbloquear</button></div>`).join('') || '<p class="muted">Sin fechas futuras bloqueadas.</p>'}</div>`;
+  $('sbAdd').onclick = async () => { const d = $('sbDate').value; if (!d) return toast('Elige una fecha.');
+    const { error: e2 } = await SB.from('fechas_bloqueadas').upsert({ fecha: d }); toast(e2 ? 'No se pudo: ' + e2.message : 'Fecha bloqueada ✔'); if (!e2) { RESERVADAS.add(d); calendar(); homeCal(); } sbDates(c); };
+  c.querySelectorAll('[data-un]').forEach(b => b.onclick = () => confirmBox('¿Desbloquear fecha?', `${fmtDate(b.dataset.un)} volverá a aparecer disponible.`, async () => {
+    const { error: e3 } = await SB.from('fechas_bloqueadas').delete().eq('fecha', b.dataset.un);
+    if (!e3) { RESERVADAS.delete(b.dataset.un); calendar(); homeCal(); } toast(e3 ? 'No se pudo: ' + e3.message : 'Fecha desbloqueada ✔'); sbDates(c); }));
+}
+
 /* ---------- Pestañas (rutas por #hash) ---------- */
 const VIEWS = ['inicio','instalaciones','eventos','reservas','contacto','admin'];
 const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], main:['inicio'] };
@@ -589,11 +698,12 @@ let curView = '';
 function route(){
   const h = location.hash.slice(1);
   let [v, anchor] = ALIAS[h] || [VIEWS.includes(h) ? h : 'inicio'];
+  document.querySelectorAll('dialog[open]').forEach(closeDlg);
   document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
   document.body.dataset.view = v;
   $('abTitle').textContent = ({instalaciones:'Instalaciones', eventos:'Eventos', reservas:'Reservas', contacto:'Contacto', admin:'Administración'})[v] || '';
   document.querySelectorAll('[data-tab-link]').forEach(a => { const on = a.dataset.tabLink === v; a.classList.toggle('on', on); on ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
-  if (v === 'admin'){ const u = who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); } }
+  if (v === 'admin'){ const u = SB ? ADMIN : who(); $('adminLogin').hidden = !!u; $('adminPanel').hidden = !u; if (u) { $('adminWho').textContent = u; renderAdmin(); } }
   if (v === 'inicio') homeCal();
   revealAll();
   if (anchor) requestAnimationFrame(() => $(anchor).scrollIntoView({block:'start'}));
@@ -605,13 +715,57 @@ let tries = 0;
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (tries >= 5) { $('lMsg').textContent = 'Demasiados intentos. Recarga la página para intentar de nuevo.'; return; }
+  await sbReady;
+  if (SB){
+    $('lMsg').textContent = 'Entrando…';
+    const { error } = await SB.auth.signInWithPassword({ email: $('lUser').value.trim().toLowerCase(), password: $('lPin').value });
+    if (error) { tries++; $('lMsg').textContent = 'Correo o clave incorrectos.'; $('lPin').value = ''; $('lPin').focus(); return; }
+    ADMIN = await sbAdminName();
+    if (!ADMIN) { await SB.auth.signOut(); $('lMsg').textContent = 'Esta cuenta no tiene acceso de administración.'; return; }
+    $('lPin').value = ''; $('lMsg').textContent = ''; route(); return;
+  }
   let adm = null; try { const hh = await sha(ADM_SALT + $('lUser').value.trim().toLowerCase() + '|' + $('lPin').value); adm = (D.administradores || []).find(x => x.h === hh); } catch {}
   if (!adm) { tries++; $('lMsg').textContent = 'Correo o clave incorrectos.'; $('lPin').value = ''; $('lPin').focus(); return; }
   try { sessionStorage.setItem(SKEY, adm.nombre); } catch {}
   $('lPin').value = ''; $('lMsg').textContent = ''; adminRoute();
 });
-$('logout').addEventListener('click', e => { e.preventDefault(); try { sessionStorage.removeItem(SKEY); } catch {} adminRoute(); });
+$('logout').addEventListener('click', async e => { e.preventDefault(); try { sessionStorage.removeItem(SKEY); } catch {} if (SB) { await SB.auth.signOut(); ADMIN = ''; } route(); });
 window.addEventListener('hashchange', route);
+
+/* ---------- Selector de fecha con calendario (reemplaza los campos de fecha) ---------- */
+let dpInput = null, dpShown = new Date();
+const dpLabel = v => { if (!v) return '📅 Elegir fecha'; const [y,m,d] = v.split('-').map(Number); return '📅 ' + new Date(y,m-1,d).toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); };
+function enhanceDates(root){
+  root.querySelectorAll('input[type=date]').forEach(inp => {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'datebtn dpbtn';
+    const aria = inp.getAttribute('aria-label') || (inp.closest('label') ? inp.closest('label').firstChild.textContent.trim() : 'Fecha');
+    btn.setAttribute('aria-label', aria);
+    const paint = () => { btn.innerHTML = `<span>${esc(dpLabel(inp.value))}</span><span aria-hidden="true">▾</span>`; };
+    inp.dataset.min = inp.min || ''; inp.type = 'hidden'; inp.after(btn); paint();
+    inp.addEventListener('input', paint); inp.addEventListener('change', paint);
+    btn.addEventListener('click', e => { e.preventDefault(); dpInput = inp; const v = inp.value; const base = v ? new Date(v + 'T12:00') : new Date(); dpShown = new Date(base.getFullYear(), base.getMonth(), 1); dpDraw(); openDlg($('dp')); });
+  });
+}
+function dpDraw(){
+  const g = $('dpGrid'); g.innerHTML = '';
+  { const m = dpShown.toLocaleDateString('es-CL',{month:'long',year:'numeric'}); $('dpMonth').textContent = m.charAt(0).toUpperCase() + m.slice(1); }
+  const start = (dpShown.getDay()+6)%7; for (let i=0;i<start;i++) g.append(document.createElement('span'));
+  const days = new Date(dpShown.getFullYear(), dpShown.getMonth()+1, 0).getDate(), min = dpInput ? dpInput.dataset.min : '';
+  for (let n=1;n<=days;n++){
+    const d = new Date(dpShown.getFullYear(), dpShown.getMonth(), n), key = iso(d);
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = n;
+    b.className = (RESERVADAS.has(key) || db.days[key] === 'booked' ? 'booked' : '') + (dpInput && dpInput.value === key ? ' selected' : '') + (+d === +today ? ' today' : '');
+    b.disabled = !!min && key < min;
+    b.setAttribute('aria-label', fmtDate(key));
+    b.addEventListener('click', () => dpPick(key));
+    g.append(b);
+  }
+}
+function dpPick(key){ if (!dpInput) return; dpInput.value = key; dpInput.dispatchEvent(new Event('input', {bubbles:true})); dpInput.dispatchEvent(new Event('change', {bubbles:true})); closeDlg($('dp')); }
+$('dpPrev').addEventListener('click', () => { dpShown.setMonth(dpShown.getMonth()-1); dpDraw(); });
+$('dpNext').addEventListener('click', () => { dpShown.setMonth(dpShown.getMonth()+1); dpDraw(); });
+$('dpToday').addEventListener('click', () => { const k = iso(today); if (dpInput && dpInput.dataset.min && k < dpInput.dataset.min) return; dpPick(k); });
+new MutationObserver(() => enhanceDates($('adminContent'))).observe($('adminContent'), {childList:true, subtree:true});
 
 /* ---------- Pantalla de inicio ---------- */
 function home(){
@@ -633,7 +787,7 @@ function home(){
   const restart = () => { clearInterval(timer); if (!reduce && S.length > 1) timer = setInterval(() => { if (curView === 'inicio' && !document.hidden) go(idx + 1); }, 5000); };
   mark(); restart();
   // tira de instalaciones
-  $('homeStrip').innerHTML = D.instalaciones.map((f,i) => `<button type="button" class="scard" data-hfac="${i}"><img src="${esc(f.foto)}" alt="" loading="lazy"><span class="spill"><svg><use href="#${esc(f.svg || 'i-img')}"/></svg>${esc(f.corto || f.titulo)}</span></button>`).join('');
+  $('homeStrip').innerHTML = D.instalaciones.map((f,i) => `<button type="button" class="scard" data-hfac="${i}"><img src="${esc(f.foto)}" alt="" loading="lazy"><span class="spill">${f.img ? `<img src="${esc(f.img)}" alt="">` : ''}${esc(f.corto || f.titulo)}</span></button>`).join('');
   $('homeStrip').querySelectorAll('[data-hfac]').forEach(b => b.addEventListener('click', () => openFacility(+b.dataset.hfac)));
   $('hprev').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()-1); homeCal(); });
   $('hnext').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()+1); homeCal(); });
@@ -658,4 +812,5 @@ function homeCal(){
 
 /* ---------- Inicio ---------- */
 facilities(); gallery(); events(); calendar(); prices(); policies(); wall(); contact(); home(); rzInit(); route();
+sbReady.then(async sb => { if (!sb) return; sbLoadDates(); ADMIN = await sbAdminName(); if (curView === 'admin') route(); });
 })();

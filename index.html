@@ -46,12 +46,12 @@
 <div class="scrim" id="scrim" hidden></div>
 <nav class="drawer" id="nav" aria-label="Menú">
   <img src="assets/logo.webp" alt="" width="900" height="569" class="dr-logo">
-  <a href="#inicio"><svg><use href="#i-home"/></svg>Inicio</a>
-  <a href="#instalaciones"><svg><use href="#i-img"/></svg>Instalaciones y galería</a>
-  <a href="#eventos"><svg><use href="#i-users"/></svg>Eventos</a>
-  <a href="#reservas"><svg><use href="#i-cal"/></svg>Reservas</a>
-  <a href="#contacto"><svg><use href="#i-phone"/></svg>Contacto y ubicación</a>
-  <a href="#visitantes"><span class="dr-ico">💛</span>Nuestros visitantes</a>
+  <a href="#inicio"><img class="dri" src="assets/ico/inicio.webp" alt="" width="200" height="181">Inicio</a>
+  <a href="#instalaciones"><img class="dri" src="assets/ico/instalaciones.webp" alt="" width="200" height="181">Instalaciones y galería</a>
+  <a href="#eventos"><img class="dri" src="assets/ico/celebracion.webp" alt="" width="200" height="181">Eventos</a>
+  <a href="#reservas"><img class="dri" src="assets/ico/calendario.webp" alt="" width="200" height="181">Reservas</a>
+  <a href="#contacto"><img class="dri" src="assets/ico/contacto.webp" alt="" width="200" height="181">Contacto y ubicación</a>
+  <a href="#visitantes"><img class="dri" src="assets/ico/familia.webp" alt="" width="200" height="181">Nuestros visitantes</a>
 </nav>
 <main id="main">
   <!-- ============ INICIO ============ -->
@@ -62,10 +62,10 @@
       <h1 class="tagline"><span class="t1" id="lema1"></span><span class="t2" id="lema2"></span></h1>
       <span class="flower f1" aria-hidden="true">🌺</span><span class="flower f2" aria-hidden="true">🌼</span>
       <div class="tiles">
-        <a class="tile t-pink" href="#reservas"><svg class="ti"><use href="#i-cal"/></svg><b>Reservas</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
-        <a class="tile t-yellow" href="#instalaciones"><svg class="ti"><use href="#i-img"/></svg><b>Instalaciones</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
-        <a class="tile t-cyan" href="#eventos"><svg class="ti"><use href="#i-users"/></svg><b>Eventos</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
-        <a class="tile t-green" href="#" id="tileMaps" target="_blank" rel="noopener"><svg class="ti"><use href="#i-pin"/></svg><b>Cómo llegar</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-pink" href="#reservas"><img class="ti" src="assets/ico/calendario.webp" alt="" width="200" height="181"><b>Reservas</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-yellow" href="#instalaciones"><img class="ti" src="assets/ico/instalaciones.webp" alt="" width="200" height="181"><b>Instalaciones</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-cyan" href="#eventos"><img class="ti" src="assets/ico/celebracion.webp" alt="" width="200" height="181"><b>Eventos</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
+        <a class="tile t-green" href="#" id="tileMaps" target="_blank" rel="noopener"><img class="ti" src="assets/ico/ubicacion.webp" alt="" width="200" height="181"><b>Cómo llegar</b><span class="go"><svg><use href="#i-chev"/></svg></span></a>
       </div>
     </section>
     <div class="home-body">
@@ -163,7 +163,7 @@
         <div id="rzStepA">
           <section class="rz-card">
             <div class="rz-calhead">
-              <h2><svg><use href="#i-cal"/></svg>Selecciona una fecha</h2>
+              <h2><img class="hico" src="assets/ico/calendario.webp" alt="" width="200" height="181">Selecciona una fecha</h2>
               <div class="rz-month"><button type="button" id="prev" aria-label="Mes anterior"><svg class="flip"><use href="#i-chev"/></svg></button><strong id="month" aria-live="polite"></strong><button type="button" id="next" aria-label="Mes siguiente"><svg><use href="#i-chev"/></svg></button></div>
             </div>
             <div class="rz-calgrid">
@@ -180,18 +180,18 @@
           </section>
 
           <section class="rz-sec">
-            <div class="rz-sechead"><h2><span class="ico" aria-hidden="true">🎉</span>Tipo de actividad</h2><button type="button" class="rz-link" id="rzDetails">Ver detalles <svg><use href="#i-chev"/></svg></button></div>
+            <div class="rz-sechead"><h2><img class="hico" src="assets/ico/celebracion.webp" alt="" width="200" height="181">Tipo de actividad</h2><button type="button" class="rz-link" id="rzDetails">Ver detalles <svg><use href="#i-chev"/></svg></button></div>
             <div class="acts" id="acts" role="radiogroup" aria-label="Tipo de actividad"></div>
           </section>
 
           <section class="rz-sec">
-            <div class="rz-sechead"><h2><svg><use href="#i-users"/></svg>Cantidad de personas</h2></div>
+            <div class="rz-sechead"><h2><img class="hico" src="assets/ico/familia.webp" alt="" width="200" height="181">Cantidad de personas</h2></div>
             <div class="chips-n" id="peopleChips" role="radiogroup" aria-label="Cantidad de personas"></div>
             <label class="rz-more" id="peopleMore" hidden>¿Cuántas personas?<input id="bpeople" type="number" min="1" max="500" inputmode="numeric" placeholder="Ej: 65"></label>
           </section>
 
           <section class="rz-sec">
-            <div class="rz-sechead"><h2><svg><use href="#i-chat"/></svg>Observaciones <small>(opcional)</small></h2></div>
+            <div class="rz-sechead"><h2><img class="hico" src="assets/ico/contacto.webp" alt="" width="200" height="181">Observaciones <small>(opcional)</small></h2></div>
             <textarea id="bnote" class="rz-text" rows="2" maxlength="500" placeholder="Cuéntanos más sobre tu evento..."></textarea>
           </section>
 
@@ -232,7 +232,7 @@
         <a class="btn green full" id="cWa" href="#" target="_blank" rel="noopener">Escribir por WhatsApp ↗</a>
       </div>
       <div class="card map">
-        <div class="map-art" aria-hidden="true"><span>📍</span></div>
+        <div class="map-art" aria-hidden="true"><img class="mapico" src="assets/ico/ubicacion.webp" alt="" width="200" height="181"></div>
         <h3>Cómo llegar</h3>
         <p id="cLoc"></p>
         <a class="btn outline-dark full" id="cMaps" href="#" target="_blank" rel="noopener">Abrir en Google Maps ↗</a>
@@ -293,11 +293,11 @@
   <img src="assets/fluva.png" alt="FLUVA · Tecnología que fluye contigo" width="620" height="235" loading="lazy">
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Secciones">
-  <a href="#inicio" data-tab-link="inicio"><svg><use href="#i-home"/></svg><span>Inicio</span></a>
-  <a href="#instalaciones" data-tab-link="instalaciones"><svg><use href="#i-img"/></svg><span>Instalaciones</span></a>
-  <a href="#eventos" data-tab-link="eventos"><svg><use href="#i-users"/></svg><span>Eventos</span></a>
-  <a href="#reservas" data-tab-link="reservas"><svg><use href="#i-cal"/></svg><span>Reservas</span></a>
-  <a href="#contacto" data-tab-link="contacto"><svg><use href="#i-phone"/></svg><span>Contacto</span></a>
+  <a href="#inicio" data-tab-link="inicio"><img class="tbi" src="assets/ico/inicio.webp" alt="" width="200" height="181"><span>Inicio</span></a>
+  <a href="#instalaciones" data-tab-link="instalaciones"><img class="tbi" src="assets/ico/instalaciones.webp" alt="" width="200" height="181"><span>Instalaciones</span></a>
+  <a href="#eventos" data-tab-link="eventos"><img class="tbi" src="assets/ico/celebracion.webp" alt="" width="200" height="181"><span>Eventos</span></a>
+  <a href="#reservas" data-tab-link="reservas"><img class="tbi" src="assets/ico/calendario.webp" alt="" width="200" height="181"><span>Reservas</span></a>
+  <a href="#contacto" data-tab-link="contacto"><img class="tbi" src="assets/ico/contacto.webp" alt="" width="200" height="181"><span>Contacto</span></a>
 </nav>
 
 <!-- Visor de galería -->
@@ -324,6 +324,17 @@
 <dialog id="rzInfo" class="sheet" aria-label="Detalles del arriendo">
   <button class="v-close dark" data-close aria-label="Cerrar">✕</button>
   <div class="sheet-body"><div id="prices" class="prices"></div></div>
+</dialog>
+
+<!-- Selector de fecha (calendario) -->
+<dialog id="dp" class="sheet small dp" aria-label="Elegir fecha">
+  <div class="sheet-body">
+    <div class="cal-head"><button type="button" id="dpPrev" class="icon-btn" aria-label="Mes anterior">‹</button><strong id="dpMonth" aria-live="polite"></strong><button type="button" id="dpNext" class="icon-btn" aria-label="Mes siguiente">›</button></div>
+    <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+    <div class="calendar dp-grid" id="dpGrid" role="grid"></div>
+    <p class="tiny dp-leg"><i class="dot bk"></i> Fechas ya reservadas</p>
+    <div class="modal-actions"><button type="button" class="btn outline-dark" data-close>Cancelar</button><button type="button" class="btn teal" id="dpToday">Hoy</button></div>
+  </div>
 </dialog>
 
 <!-- Mensaje WhatsApp preparado / confirmaciones -->
