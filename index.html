@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ff1a9a">
+<meta name="author" content="FLUVA">
+<meta name="description" content="El Quincho de Agustina: piscina, cancha, quincho y celebraciones en El Manzano, Las Dichas, Casablanca.">
+<title>El Quincho de Agustina</title>
+<link rel="icon" href="assets/logo-redondo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="top" id="top">
+  <a class="brand" href="#inicio" aria-label="El Quincho de Agustina, inicio">
+    <img src="assets/logo.webp" alt="El Quincho de Agustina" width="900" height="569">
+  </a>
+  <nav id="nav" class="nav" aria-label="Principal">
+    <a href="#instalaciones">Instalaciones</a>
+    <a href="#galeria">Galería</a>
+    <a href="#eventos">Eventos</a>
+    <a href="#reservas">Disponibilidad</a>
+    <a href="#visitantes">Visitantes</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+  <a class="btn pink sm hide-m" href="#reservas">Reserva aquí</a>
+  <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+</header>
+
+<main id="main">
+  <!-- PORTADA -->
+  <section id="inicio" class="hero">
+    <div class="hero-copy reveal">
+      <span class="tag">☀ El Manzano · Las Dichas · Casablanca</span>
+      <h1>Tu día de verano <span class="hl">perfecto</span> está aquí.</h1>
+      <p>Piscina, cancha, quincho y áreas de sombra para disfrutar en familia y celebrar lo que quieras, a un paso de Casablanca.</p>
+      <div class="actions">
+        <a class="btn pink" href="#reservas">📅 Consultar disponibilidad</a>
+        <a class="btn outline" href="#eventos">Organiza tu evento</a>
+      </div>
+      <ul class="chips" aria-label="Lo que encontrarás">
+        <li>🏊 Piscina</li><li>⚽ Cancha</li><li>🍖 Quincho</li><li>⛱️ Sombra</li>
+      </ul>
+    </div>
+    <figure class="hero-media reveal">
+      <img src="assets/aerea.jpg" alt="Vista aérea de El Quincho de Agustina con piscina, quincho de techo rojo, toldos y cancha sintética" width="1086" height="1448" fetchpriority="high">
+      <figcaption>Vista aérea del recinto (imagen editada)</figcaption>
+    </figure>
+    <div class="wave" aria-hidden="true"></div>
+  </section>
+
+  <!-- INSTALACIONES -->
+  <section id="instalaciones" class="section">
+    <div class="head reveal">
+      <span class="tag teal">Instalaciones</span>
+      <h2>Todo para un <span class="hl">gran día</span></h2>
+      <p>Toca cada ficha para ver los detalles.</p>
+    </div>
+    <div id="facilities" class="facilities"></div>
+  </section>
+
+  <!-- GALERÍA -->
+  <section id="galeria" class="section sky">
+    <div class="head reveal">
+      <span class="tag pinkt">Galería</span>
+      <h2>Conoce el <span class="hl">Quincho</span></h2>
+      <p>Toca una foto para verla en grande.</p>
+    </div>
+    <div class="filters" id="gFilters" role="group" aria-label="Filtrar galería"></div>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
+  <!-- EVENTOS -->
+  <section id="eventos" class="section events">
+    <div class="head reveal">
+      <span class="tag yellow">Celebraciones</span>
+      <h2>Eventos que se <span class="hl">recuerdan</span></h2>
+      <p>Cuéntanos tu idea y Carla te prepara una cotización personalizada.</p>
+    </div>
+    <div class="two">
+      <div id="eventHighlights" class="highlights"></div>
+      <form id="eventForm" class="card form" novalidate>
+        <h3>Cotiza tu evento</h3>
+        <label>Tipo de evento<select id="etype"></select></label>
+        <div class="row2">
+          <div class="field"><span class="flabel" id="edateLbl">Fecha deseada</span>
+            <button type="button" class="datebtn" id="edateBtn" aria-expanded="false" aria-controls="ecal" aria-labelledby="edateLbl edateBtn"><span id="edateTxt">📅 Elige una fecha</span><span aria-hidden="true">▾</span></button>
+            <input type="hidden" id="edate">
+          </div>
+          <label>Invitados<input type="number" id="eguests" min="1" max="1000" required value="50" inputmode="numeric"></label>
+        </div>
+        <div class="minical" id="ecal" hidden>
+          <div class="cal-head"><button type="button" id="eprev" class="icon-btn" aria-label="Mes anterior">‹</button><strong id="emonth" aria-live="polite"></strong><button type="button" id="enext" class="icon-btn" aria-label="Mes siguiente">›</button></div>
+          <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+          <div class="calendar" id="ecalGrid" role="grid" aria-label="Elegir fecha del evento"></div>
+          <p class="tiny" style="margin-top:8px">Los días tachados ya están reservados.</p>
+        </div>
+        <fieldset><legend>Servicios que te interesan</legend><div id="eservices" class="checks"></div></fieldset>
+        <label>Nombre<input id="ename" required maxlength="90" autocomplete="name"></label>
+        <label>WhatsApp<input id="ephone" type="tel" required value="+56 9 " placeholder="+56 9 1234 5678" data-prefix="+56 9 " maxlength="25" autocomplete="tel"></label>
+        <label>Detalles<textarea id="edetails" rows="2" maxlength="500"></textarea></label>
+        <button class="btn pink full" type="submit">Preparar cotización por WhatsApp</button>
+        <p class="tiny">Es una solicitud: la fecha queda sujeta a confirmación de Carla.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- DISPONIBILIDAD -->
+  <section id="reservas" class="section sand">
+    <div class="head reveal">
+      <span class="tag teal">Disponibilidad</span>
+      <h2>Consulta tu <span class="hl">fecha</span></h2>
+      <p>Elige un día habilitado y envía tu solicitud. El arriendo exclusivo es la modalidad principal; las entradas individuales se abren en fechas especiales.</p>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="cal-head">
+          <button id="prev" class="icon-btn" aria-label="Mes anterior">‹</button>
+          <strong id="month" aria-live="polite"></strong>
+          <button id="next" class="icon-btn" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="weekdays" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+        <div id="calendar" class="calendar" role="grid" aria-label="Calendario de disponibilidad"></div>
+        <div class="legend">
+          <span><i class="dot ok"></i>Arriendo exclusivo</span>
+          <span><i class="dot sp"></i>Entradas individuales</span>
+          <span><i class="dot bk"></i>Reservado</span>
+          <span><i class="dot cl"></i>No habilitado</span>
+        </div>
+        <div id="prices" class="prices"></div>
+      </div>
+      <form id="bookingForm" class="card form" novalidate>
+        <h3>Solicita tu reserva</h3>
+        <p class="muted" id="chosenDate">Selecciona un día del calendario.</p>
+        <label>Modalidad<input id="bookingMode" readonly placeholder="Selecciona una fecha"></label>
+        <label>Nombre y apellido<input id="bname" required maxlength="90" autocomplete="name"></label>
+        <div class="row2">
+          <label>WhatsApp<input id="bphone" type="tel" required value="+56 9 " placeholder="+56 9 1234 5678" data-prefix="+56 9 " maxlength="25" autocomplete="tel"></label>
+          <label>Asistentes<input id="bpeople" type="number" min="1" max="500" value="40" required inputmode="numeric"></label>
+        </div>
+        <p class="estimate" id="estimate" aria-live="polite"></p>
+        <label>Comentarios<textarea id="bnote" rows="3" maxlength="500" placeholder="Cuéntanos lo que necesitas"></textarea></label>
+        <button class="btn pink full" type="submit">Preparar solicitud por WhatsApp</button>
+        <p class="tiny">La solicitud no bloquea la fecha ni implica pago. Carla confirmará la disponibilidad.</p>
+        <div class="policies" id="policies"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- VISITANTES -->
+  <section id="visitantes" class="section">
+    <div class="head reveal">
+      <span class="tag pinkt">Nuestros visitantes</span>
+      <h2>Historias que <span class="hl">quedan</span> ♥</h2>
+      <p>Un mural de recuerdos. Cada mensaje se revisa antes de publicarse.</p>
+    </div>
+    <div id="wall" class="wall"></div>
+    <form id="wallForm" class="card form narrow">
+      <h3>Deja tu recuerdo 💌</h3>
+      <label>Nombre de familia o grupo<input id="wname" required maxlength="80"></label>
+      <label>Tu experiencia<textarea id="wmessage" required rows="3" maxlength="600"></textarea></label>
+      <label class="check"><input type="checkbox" id="wconsent" required> Autorizo la publicación de mi comentario. Las fotografías requieren autorización adicional.</label>
+      <button class="btn teal" type="submit">Enviar para revisión</button>
+    </form>
+  </section>
+
+  <!-- CONTACTO Y UBICACIÓN -->
+  <section id="contacto" class="section contact">
+    <div class="head reveal center">
+      <span class="tag yellow">Contacto y ubicación</span>
+      <h2>Hablemos de tu <span class="hl">próximo día</span></h2>
+    </div>
+    <div class="contact-grid">
+      <div class="card">
+        <h3 id="cName"></h3>
+        <p class="muted" id="cRole"></p>
+        <ul class="info" id="cInfo"></ul>
+        <a class="btn green full" id="cWa" href="#" target="_blank" rel="noopener">Escribir por WhatsApp ↗</a>
+      </div>
+      <div class="card map">
+        <div class="map-art" aria-hidden="true"><span>📍</span></div>
+        <h3>Cómo llegar</h3>
+        <p id="cLoc"></p>
+        <a class="btn outline-dark full" id="cMaps" href="#" target="_blank" rel="noopener">Abrir en Google Maps ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN DEMO -->
+  <section id="admin" class="section admin">
+    <details class="admin-wrap">
+      <summary>🔒 Panel de administración (demo)</summary>
+      <div class="warning">⚠ Versión demostrativa: los datos se guardan solo en este navegador. No es un panel seguro ni sincronizado. No uses datos reales hasta conectar autenticación y base de datos.</div>
+      <div class="tabs" role="tablist">
+        <button data-tab="dates" class="active" role="tab">Fechas</button>
+        <button data-tab="requests" role="tab">Solicitudes</button>
+        <button data-tab="photos" role="tab">Fotos</button>
+        <button data-tab="memories" role="tab">Mural</button>
+        <button data-tab="pending" role="tab">Datos pendientes</button>
+      </div>
+      <div id="adminContent" class="card"></div>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <img src="assets/logo-redondo.png" alt="" width="64" height="64" loading="lazy" class="round">
+  <span>El Manzano · Las Dichas · Casablanca</span>
+  <span>¿Dudas? <a href="#contacto"><b>Escríbenos</b></a></span>
+</footer>
+<div class="fluva">
+  <span>Desarrollado por</span>
+  <img src="assets/fluva.png" alt="FLUVA · Tecnología que fluye contigo" width="620" height="235" loading="lazy">
+</div>
+
+<a class="floating" href="#reservas">📅 Reserva aquí</a>
+
+<!-- Visor de galería -->
+<dialog id="viewer" class="viewer" aria-label="Visor de fotos">
+  <button class="v-close" data-close aria-label="Cerrar">✕</button>
+  <button class="v-nav v-prev" id="vPrev" aria-label="Foto anterior">‹</button>
+  <figure><img id="vImg" alt=""><figcaption id="vCap"></figcaption></figure>
+  <button class="v-nav v-next" id="vNext" aria-label="Foto siguiente">›</button>
+</dialog>
+
+<!-- Ficha de instalación -->
+<dialog id="facility" class="sheet" aria-labelledby="fTitle">
+  <button class="v-close dark" data-close aria-label="Cerrar">✕</button>
+  <img id="fImg" alt="">
+  <div class="sheet-body">
+    <h3 id="fTitle"></h3>
+    <p id="fText"></p>
+    <dl id="fList"></dl>
+    <a class="btn pink full" href="#reservas" data-close>Consultar disponibilidad</a>
+  </div>
+</dialog>
+
+<!-- Mensaje WhatsApp preparado / confirmaciones -->
+<dialog id="modal" class="sheet small" aria-labelledby="mTitle">
+  <div class="sheet-body">
+    <h3 id="mTitle"></h3>
+    <p id="mText"></p>
+    <pre id="mMsg" class="msg" hidden></pre>
+    <div class="modal-actions" id="mActions"></div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
