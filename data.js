@@ -104,6 +104,17 @@ window.QUINCHO_DATA = {
     individual: { nombre: 'Entrada individual (fechas especiales)', precioAdulto: null, precioNino: null }
   },
 
+  /* Calendario público. Solo fechas, sin datos de clientes.
+     Copiadas de la "Agenda El Quincho de Agustina" (actualizar al tomar reservas nuevas). */
+  disponibilidadPorDefecto: 'exclusive',   // días futuros no reservados = disponibles para arriendo
+  fechasReservadas: [
+    '2026-09-05', '2026-09-26',
+    '2026-10-10', '2026-10-11', '2026-10-17',
+    '2026-11-21', '2026-11-28',
+    '2026-12-05', '2026-12-06', '2026-12-12', '2026-12-13', '2026-12-17', '2026-12-19', '2026-12-25',
+    '2027-01-03'
+  ],
+
   /* Condiciones de reserva. Agregar más líneas aquí (cancelación, alcohol, mascotas, piscina…) */
   politicas: [
     { icono: '💳', texto: 'Para reservar se requiere un abono del 50% del valor total.' }

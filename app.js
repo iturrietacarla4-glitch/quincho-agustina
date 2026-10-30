@@ -139,7 +139,8 @@ const num = (min,max) => v => +v >= min && +v <= max;
 
 /* ---------- Calendario ---------- */
 let shown = new Date(today.getFullYear(), today.getMonth(), 1), selected = '';
-const status = k => db.days[k] || 'closed';
+const RESERVADAS = new Set(D.fechasReservadas || []);
+const status = k => db.days[k] || (RESERVADAS.has(k) ? 'booked' : (D.disponibilidadPorDefecto || 'closed'));
 const LABEL = {closed:'No habilitado', exclusive:'Arriendo exclusivo', individual:'Entradas individuales', booked:'Reservado'};
 function calendar(){
   if (typeof eventCal === 'function' && !$('ecal').hidden) eventCal();
@@ -315,7 +316,7 @@ function renderAdmin(){
   document.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-selected', b.dataset.tab === tab); });
   const c = $('adminContent');
   if (tab === 'dates'){
-    c.innerHTML = `<h3>Habilitar o bloquear fechas</h3><p class="muted">Por defecto todos los días están cerrados.</p>
+    c.innerHTML = `<h3>Habilitar o bloquear fechas</h3><p class="muted">Por defecto los días están disponibles; las fechas reservadas vienen de <code>data.js</code>. Aquí puedes ajustar días puntuales (solo en este navegador).</p>
       <div class="form"><div class="row2"><label>Fecha<input id="aDate" type="date" min="${iso(today)}"></label>
       <label>Estado<select id="aState">${Object.entries(LABEL).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div></div>
       <button class="btn teal" id="aSave" type="button">Guardar fecha</button><div id="aList"></div>`;
