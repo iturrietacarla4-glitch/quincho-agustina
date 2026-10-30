@@ -12,6 +12,8 @@ const clp = v => (v === '' || v == null) ? null : Number(v).toLocaleString('es-C
 const PEND = '<span class="pend">Por confirmar</span>';
 const waLink = msg => `https://wa.me/${C.whatsapp}${msg ? '?text=' + encodeURIComponent(msg) : ''}`;
 
+const ico = (sym, tone, cls='mi') => `<span class="${cls} t-${tone||'pink'}" aria-hidden="true"><svg><use href="#${sym}"/></svg></span>`;
+
 /* ---------- Almacenamiento local (solo demo) ---------- */
 const KEY = 'quincho-demo-v3';
 const initial = () => ({
@@ -76,17 +78,20 @@ const revealAll = () => document.querySelectorAll('.reveal:not(.in)').forEach(el
 /* ---------- Instalaciones ---------- */
 function facilities(){
   $('facilities').innerHTML = D.instalaciones.map((f,i) => `
-    <button class="fac reveal" type="button" data-fac="${i}" aria-haspopup="dialog">
-      <span class="ico" aria-hidden="true">${f.img ? `<img src="${esc(f.img)}" alt="">` : f.icono}</span>
-      <img src="${esc(f.foto)}" alt="${esc(f.titulo)}" loading="lazy" width="600" height="895">
-      <div class="body"><h3>${esc(f.titulo)}</h3><p>${esc(f.texto)}</p><span class="more">Ver ficha →</span></div>
-    </button>`).join('');
+    <article class="fcard reveal">
+      <button type="button" class="fphoto" data-fac="${i}" aria-label="Ver detalle de ${esc(f.titulo)}"><img src="${esc(f.foto)}" alt="${esc(f.titulo)}" loading="lazy" decoding="async" width="600" height="895"></button>
+      <div class="fbody">
+        <div class="fhead">${ico(f.ico || 'm-img', f.tone)}<h3>${esc(f.titulo)}</h3></div>
+        <p>${esc(f.texto)}</p>
+        <div class="factions"><button type="button" class="lnk" data-fac="${i}">Detalles</button><a class="chip-btn" href="#reservas">Reservar</a></div>
+      </div>
+    </article>`).join('');
   $('facilities').querySelectorAll('[data-fac]').forEach(b => b.addEventListener('click', () => openFacility(+b.dataset.fac)));
 }
 function openFacility(i){
   const f = D.instalaciones[i];
   $('fImg').src = f.foto; $('fImg').alt = f.titulo;
-  $('fTitle').innerHTML = (f.img ? `<img class="ftico" src="${esc(f.img)}" alt="">` : esc(f.icono) + ' ') + esc(f.titulo); $('fText').textContent = f.texto;
+  $('fTitle').innerHTML = ico(f.ico || 'm-img', f.tone, 'hmi') + esc(f.titulo); $('fText').textContent = f.texto;
   $('fList').innerHTML = Object.entries(f.detalles).filter(([,v]) => v).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
   openDlg($('facility'));
 }
@@ -114,9 +119,18 @@ $('viewer').addEventListener('touchend', e => { if (tx == null) return; const dx
 /* ---------- Eventos ---------- */
 function events(){
   const E = D.eventos;
-  $('eventHighlights').innerHTML = E.destacados.map(h => `<div class="hcard reveal">${h.foto ? `<img src="${esc(h.foto)}" alt="${esc(h.titulo)}" loading="lazy">` : ''}<div class="t">${h.img ? `<img class="himg" src="${esc(h.img)}" alt="">` : `<span class="e" aria-hidden="true">${h.icono}</span>`}<b>${esc(h.titulo)}</b><p>${esc(h.texto)}</p></div></div>`).join('');
+  $('eventHighlights').innerHTML = E.destacados.map((h,i) => `<article class="ecard reveal">
+      <div class="ephoto"><img src="${esc(h.foto)}" alt="" loading="lazy" decoding="async"></div>
+      <div class="ebody">${ico(h.ico, h.tone)}<h3>${esc(h.titulo)}</h3><p>${esc(h.texto)}</p>
+        <div class="factions"><button type="button" class="chip-btn" data-cot="${i}">Cotizar</button><button type="button" class="lnk" data-res="${i}">Reservar</button></div></div>
+    </article>`).join('');
   $('etype').innerHTML = E.tipos.map(t => `<option>${esc(t)}</option>`).join('');
-  $('eservices').innerHTML = E.servicios.map(s => `<label class="check"><input type="checkbox" value="${esc(s)}"> ${esc(s)}</label>`).join('');
+  $('eservices').innerHTML = E.servicios.map(s => `<label class="psel"><input type="checkbox" value="${esc(s)}"><span>${esc(s)}</span></label>`).join('');
+  $('eventHighlights').addEventListener('click', e => {
+    const c = e.target.closest('[data-cot]'), r = e.target.closest('[data-res]');
+    if (c){ const h = E.destacados[+c.dataset.cot]; if ([...$('etype').options].some(o => o.text === h.tipo)) $('etype').value = h.tipo; $('eventForm').scrollIntoView({behavior:'smooth', block:'start'}); setTimeout(() => $('etype').focus({preventScroll:true}), 400); }
+    if (r){ const h = E.destacados[+r.dataset.res]; bAct = h.act || ''; location.hash = 'reservas'; rzPaint(); }
+  });
 }
 
 /* ---------- Validación ---------- */
@@ -240,7 +254,7 @@ const ACTS = D.actividades || [];
 let bAct = '', bPeople = 0;
 const PEOPLE_OPTS = [10, 20, 30, 40, 50];
 function rzInit(){
-  $('acts').innerHTML = ACTS.map(x => `<button type="button" class="act" role="radio" aria-checked="false" data-act="${esc(x.id)}">${x.img ? `<img class="aimg" src="${esc(x.img)}" alt="">` : `<span class="aemo" aria-hidden="true">${x.icono||''}</span>`}<b>${esc(x.titulo)}</b><small>${esc(x.sub)}</small></button>`).join('');
+  $('acts').innerHTML = ACTS.map(x => `<button type="button" class="act" role="radio" aria-checked="false" data-act="${esc(x.id)}">${ico(x.ico || 'm-star', x.tone, 'ami')}<b>${esc(x.titulo)}</b><small>${esc(x.sub)}</small></button>`).join('');
   $('acts').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; bAct = b.dataset.act; rzPaint(); });
   $('peopleChips').innerHTML = PEOPLE_OPTS.map(n => `<button type="button" role="radio" aria-checked="false" data-n="${n}">${n}</button>`).join('') + `<button type="button" role="radio" aria-checked="false" data-n="more" aria-label="Más de 50 u otra cantidad">+</button>`;
   $('peopleChips').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return;
@@ -323,16 +337,17 @@ function wall(){
 function contact(){
   const N = D.negocio;
   $('cName').textContent = C.nombre; $('cRole').textContent = C.rol;
-  const rows = [
-    ['💬', `WhatsApp: <b>${esc(C.whatsappTexto)}</b>`],
-    ['📸', `<a href="${esc(N.redes.instagram.url)}" target="_blank" rel="noopener"><b>${esc(N.redes.instagram.usuario)}</b></a>`],
-    ['✉️', `Correo: ${N.contacto.email ? `<a href="mailto:${esc(N.contacto.email)}"><b>${esc(N.contacto.email)}</b></a>` : PEND}`],
-    ['🕒', `Horario: ${N.horarios ? esc(N.horarios) : PEND}`],
-    ['🌞', `Temporada: ${N.temporada ? esc(N.temporada) : PEND}`],
-    ['👥', `Capacidad: ${N.aforoMaximo ? esc(N.aforoMaximo) : PEND}`]
-  ];
-  $('cInfo').innerHTML = rows.map(([i,t]) => `<li><span aria-hidden="true">${i}</span><span>${t}</span></li>`).join('');
-  $('cWa').href = waLink(`Hola Carla, tengo una consulta sobre ${N.nombre}.`);
+  const waHref = waLink(`Hola Carla, tengo una consulta sobre ${N.nombre}.`);
+  const cards = [
+    { sym:'m-wa', tone:'green', t:'WhatsApp', v:C.whatsappTexto, href:waHref },
+    N.contacto.email ? { sym:'m-mail', tone:'sky', t:'Correo', v:N.contacto.email, href:'mailto:' + N.contacto.email } : null,
+    { sym:'m-ig', tone:'pink', t:'Instagram', v:N.redes.instagram.usuario, href:N.redes.instagram.url },
+    N.horarios ? { sym:'m-clock', tone:'peach', t:'Horario', v:N.horarios } : null,
+    N.temporada ? { sym:'m-cal', tone:'teal', t:'Temporada', v:N.temporada } : null,
+    N.aforoMaximo ? { sym:'m-users', tone:'lav', t:'Capacidad', v:N.aforoMaximo } : null
+  ].filter(Boolean);
+  $('cInfo').innerHTML = cards.map(c => `<${c.href ? `a href="${esc(c.href)}" target="_blank" rel="noopener"` : 'div'} class="ccard">${ico(c.sym, c.tone)}<span class="ctx"><small>${esc(c.t)}</small><b>${esc(c.v)}</b></span>${c.href ? '<svg class="chev"><use href="#i-chev"/></svg>' : ''}</${c.href ? 'a' : 'div'}>`).join('');
+  $('cWa').href = waHref;
   $('cLoc').innerHTML = `<b>${esc(N.direccionExacta || N.ubicacion)}</b><br><span class="tiny">Región de Valparaíso, Chile</span>`;
   $('cMaps').href = N.mapsUrl;
 }
@@ -693,7 +708,7 @@ async function sbDates(c){
 
 /* ---------- Pestañas (rutas por #hash) ---------- */
 const VIEWS = ['inicio','instalaciones','eventos','reservas','contacto','admin'];
-const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], main:['inicio'] };
+const ALIAS = { galeria:['instalaciones','galeria'], visitantes:['contacto','visitantes'], disponibilidad:['inicio','disponibilidad'], main:['inicio'] };
 let curView = '';
 function route(){
   const h = location.hash.slice(1);
@@ -731,6 +746,7 @@ $('loginForm').addEventListener('submit', async e => {
 });
 $('logout').addEventListener('click', async e => { e.preventDefault(); try { sessionStorage.removeItem(SKEY); } catch {} if (SB) { await SB.auth.signOut(); ADMIN = ''; } route(); });
 window.addEventListener('hashchange', route);
+window.addEventListener('pageshow', () => document.querySelectorAll('dialog[open]').forEach(closeDlg));
 
 /* ---------- Selector de fecha con calendario (reemplaza los campos de fecha) ---------- */
 let dpInput = null, dpShown = new Date();
@@ -767,6 +783,10 @@ $('dpNext').addEventListener('click', () => { dpShown.setMonth(dpShown.getMonth(
 $('dpToday').addEventListener('click', () => { const k = iso(today); if (dpInput && dpInput.dataset.min && k < dpInput.dataset.min) return; dpPick(k); });
 new MutationObserver(() => enhanceDates($('adminContent'))).observe($('adminContent'), {childList:true, subtree:true});
 
+/* ---------- Estados de carga y error de imágenes ---------- */
+document.addEventListener('load', e => { if (e.target.tagName === 'IMG') e.target.classList.add('ok'); }, true);
+document.addEventListener('error', e => { const t = e.target; if (t.tagName !== 'IMG' || t.dataset.failed) return; t.dataset.failed = '1'; t.classList.add('img-err'); if (t.parentElement) t.parentElement.classList.add('has-err'); }, true);
+
 /* ---------- Pantalla de inicio ---------- */
 function home(){
   const [l1, l2] = D.negocio.lema || ['Un día de diversión','en la naturaleza'];
@@ -774,20 +794,27 @@ function home(){
   $('tileMaps').href = D.negocio.mapsUrl; $('abWa').href = waLink(`Hola Carla, tengo una consulta sobre ${D.negocio.nombre}.`);
   // carrusel
   const S = D.promos || [];
-  $('promoTrack').innerHTML = S.map((p,i) => `<a class="slide" href="${esc(p.link)}" style="background-image:linear-gradient(90deg,rgba(20,10,30,.78),rgba(20,10,30,.15) 70%),url('${esc(p.foto)}')" aria-label="${esc(p.t1+' '+p.t2)}">
-      <span class="s1">${esc(p.t1)}</span><span class="s2">${esc(p.t2)}</span><span class="smore">Ver más <svg><use href="#i-chev"/></svg></span></a>`).join('');
-  $('promoDots').innerHTML = S.map((_,i) => `<button type="button" aria-label="Ir a la diapositiva ${i+1}" data-dot="${i}"></button>`).join('');
-  const tr = $('promoTrack'); let idx = 0, timer;
-  const go = i => { idx = (i + S.length) % S.length; tr.scrollTo({left: idx * tr.clientWidth, behavior:'smooth'}); };
-  const mark = () => { idx = Math.round(tr.scrollLeft / Math.max(1,tr.clientWidth)); $('promoDots').querySelectorAll('button').forEach((b,i) => b.classList.toggle('on', i === idx)); };
+  $('promoTrack').innerHTML = S.map((p,i) => `<a class="slide2" href="${esc(p.link)}" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${S.length}: ${esc(p.t1+' '+p.t2)}">
+      <img src="${esc(p.foto)}" alt="" loading="${i ? 'lazy' : 'eager'}" decoding="async"><span class="sgrad" aria-hidden="true"></span>
+      <span class="scap"><span class="s1">${esc(p.t1)}</span><span class="s2">${esc(p.t2)}</span><span class="smore">Ver más <svg><use href="#i-chev"/></svg></span></span></a>`).join('');
+  $('promoDots').innerHTML = S.map((_,i) => `<button type="button" role="tab" aria-label="Diapositiva ${i+1}" data-dot="${i}"></button>`).join('');
+  const tr = $('promoTrack'); let idx = 0, timer, paused = false;
+  const go = i => { idx = (i + S.length) % S.length; tr.scrollTo({left: idx * tr.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); };
+  const mark = () => { idx = Math.round(tr.scrollLeft / Math.max(1,tr.clientWidth)); $('promoDots').querySelectorAll('button').forEach((b,i) => { b.classList.toggle('on', i === idx); b.setAttribute('aria-selected', i === idx); }); };
   tr.addEventListener('scroll', () => { clearTimeout(tr._t); tr._t = setTimeout(mark, 80); }, {passive:true});
   $('promoDots').addEventListener('click', e => { const b = e.target.closest('[data-dot]'); if (b) { go(+b.dataset.dot); restart(); } });
   $('promoNext').addEventListener('click', () => { go(idx + 1); restart(); });
+  $('promoPrev').addEventListener('click', () => { go(idx - 1); restart(); });
+  $('promo').addEventListener('keydown', e => { if (e.key === 'ArrowRight') { go(idx + 1); restart(); } if (e.key === 'ArrowLeft') { go(idx - 1); restart(); } });
+  ['mouseenter','focusin','touchstart'].forEach(ev => $('promo').addEventListener(ev, () => paused = true, {passive:true}));
+  ['mouseleave','focusout'].forEach(ev => $('promo').addEventListener(ev, () => paused = false));
+  $('promo').addEventListener('touchend', () => setTimeout(() => paused = false, 4000), {passive:true});
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const restart = () => { clearInterval(timer); if (!reduce && S.length > 1) timer = setInterval(() => { if (curView === 'inicio' && !document.hidden) go(idx + 1); }, 5000); };
+  const restart = () => { clearInterval(timer); if (!reduce && S.length > 1) timer = setInterval(() => { if (!paused && curView === 'inicio' && !document.hidden) go(idx + 1); }, 5500); };
+  window.addEventListener('resize', () => go(idx));
   mark(); restart();
   // tira de instalaciones
-  $('homeStrip').innerHTML = D.instalaciones.map((f,i) => `<button type="button" class="scard" data-hfac="${i}"><img src="${esc(f.foto)}" alt="" loading="lazy"><span class="spill">${f.img ? `<img src="${esc(f.img)}" alt="">` : ''}${esc(f.corto || f.titulo)}</span></button>`).join('');
+  $('homeStrip').innerHTML = D.instalaciones.map((f,i) => `<button type="button" class="scard" data-hfac="${i}" aria-label="${esc(f.titulo)}"><img src="${esc(f.foto)}" alt="" loading="lazy" decoding="async"><span class="spill">${ico(f.ico || 'm-img', f.tone, 'smi')}${esc(f.corto || f.titulo)}</span></button>`).join('');
   $('homeStrip').querySelectorAll('[data-hfac]').forEach(b => b.addEventListener('click', () => openFacility(+b.dataset.hfac)));
   $('hprev').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()-1); homeCal(); });
   $('hnext').addEventListener('click', () => { hShown.setMonth(hShown.getMonth()+1); homeCal(); });
