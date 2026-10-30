@@ -33,39 +33,39 @@ window.QUINCHO_DATA = {
   },
 
   instalaciones: [
-    { id: 'piscina', img: 'assets/ico/piscina.webp', svg: 'i-waves', corto: 'Piscina', icono: '🏊', titulo: 'Piscina', foto: 'assets/piscina.jpg',
+    { id: 'piscina', ico: 'm-pool', tone: 'blue', img: 'assets/ico/piscina.webp', svg: 'i-waves', corto: 'Piscina', icono: '🏊', titulo: 'Piscina', foto: 'assets/piscina.jpg',
       texto: 'Piscina al aire libre con zona de poca profundidad, reposeras y quitasoles.',
       detalles: { 'Medidas / profundidad': null, 'Salvavidas': 'No' } },
-    { id: 'cancha', img: 'assets/ico/cancha.webp', svg: 'i-ball', corto: 'Cancha', icono: '⚽', titulo: 'Cancha y zona picnic', foto: 'assets/picnic-cancha.jpg',
+    { id: 'cancha', ico: 'm-ball', tone: 'green', img: 'assets/ico/cancha.webp', svg: 'i-ball', corto: 'Cancha', icono: '⚽', titulo: 'Cancha y zona picnic', foto: 'assets/picnic-cancha.jpg',
       texto: 'Cancha de pasto sintético con arcos y mesas de picnic de madera junto a ella.',
       detalles: { 'Tipo de cancha': 'Baby fútbol, pasto sintético', 'Incluida en el arriendo': 'Sí' } },
-    { id: 'quincho', img: 'assets/ico/quincho.webp', svg: 'i-roof', corto: 'Quincho techado', icono: '🍖', titulo: 'Quincho y parrillas', foto: 'assets/parrilla.jpg',
+    { id: 'quincho', ico: 'm-roof', tone: 'peach', img: 'assets/ico/quincho.webp', svg: 'i-roof', corto: 'Quincho techado', icono: '🍖', titulo: 'Quincho y parrillas', foto: 'assets/parrilla.jpg',
       texto: 'Parrilla grande y quincho techado para el asado de toda la familia.',
       detalles: { 'Parrillas': 'Equipadas, incluidas en el arriendo', 'Refrigeradores': 'Incluidos', 'Carbón o leña': 'Se pueden usar ambos' } },
-    { id: 'salon', img: 'assets/ico/instalaciones.webp', svg: 'i-plate', corto: 'Salón y terraza', icono: '🍽️', titulo: 'Salón y terraza', foto: 'assets/salon-montaje.jpg',
+    { id: 'salon', ico: 'm-plate', tone: 'lav', img: 'assets/ico/instalaciones.webp', svg: 'i-plate', corto: 'Salón y terraza', icono: '🍽️', titulo: 'Salón y terraza', foto: 'assets/salon-montaje.jpg',
       texto: 'Salón revestido en madera y terraza techada, con montaje de mesas para almuerzos y eventos.',
       detalles: { 'Capacidad para eventos': 'Hasta 80 personas', 'Loza': 'Incluida en el arriendo', 'Mantelería': 'A solicitud del evento' } },
-    { id: 'juegos', img: 'assets/ico/inflables.webp', svg: 'i-balloon', corto: 'Inflables', icono: '🎈', titulo: 'Juegos inflables', foto: 'assets/inflable-tobogan.jpg',
+    { id: 'juegos', ico: 'm-castle', tone: 'pink', img: 'assets/ico/inflables.webp', svg: 'i-balloon', corto: 'Inflables', icono: '🎈', titulo: 'Juegos inflables', foto: 'assets/inflable-tobogan.jpg',
       texto: 'Gran tobogán inflable de colores para que los niños disfruten todo el día.',
       detalles: { 'Incluido en el arriendo': 'No, se cotiza aparte' } },
-    { id: 'cama', img: 'assets/ico/inflables.webp', svg: 'i-jump', corto: 'Cama elástica', icono: '🤸', titulo: 'Cama elástica y columpios', foto: 'assets/cama-elastica.jpg',
+    { id: 'cama', ico: 'm-jump', tone: 'yellow', img: 'assets/ico/inflables.webp', svg: 'i-jump', corto: 'Cama elástica', icono: '🤸', titulo: 'Cama elástica y columpios', foto: 'assets/cama-elastica.jpg',
       texto: 'Cama elástica con malla de protección y columpios, bajo toldos de sombra.',
       detalles: {} },
-    { id: 'sombra', img: 'assets/ico/descanso.webp', svg: 'i-umb', corto: 'Zonas de descanso', icono: '⛱️', titulo: 'Áreas de sombra', foto: 'assets/juegos-piscina.jpg',
+    { id: 'sombra', ico: 'm-relax', tone: 'mint', img: 'assets/ico/descanso.webp', svg: 'i-umb', corto: 'Zonas de descanso', icono: '⛱️', titulo: 'Áreas de sombra', foto: 'assets/juegos-piscina.jpg',
       texto: 'Toldos tensados y quitasoles alrededor de la piscina para descansar del sol.',
       detalles: { 'Mesas disponibles': 'Sí', 'Reposeras': 'Sí' } },
-    { id: 'foodtruck', img: 'assets/ico/foodtruck.webp', svg: 'i-truck', corto: 'Food truck', icono: '🌮', titulo: 'Food truck', foto: 'assets/foodtruck.jpg',
+    { id: 'foodtruck', ico: 'm-truck', tone: 'coral', img: 'assets/ico/foodtruck.webp', svg: 'i-truck', corto: 'Food truck', icono: '🌮', titulo: 'Food truck', foto: 'assets/foodtruck.jpg',
       texto: 'Carro de comida en el recinto para picar algo rico sin salir del quincho.',
       detalles: { 'Menú': 'A solicitud del evento', 'Días de atención': 'Cuando se solicite para el evento' } }
   ],
 
   /* Tipos de actividad del formulario de reserva */
   actividades: [
-    { id: 'familiar', img: 'assets/ico/familia.webp', svg: 'i-users', color: '#ff1493', titulo: 'Uso familiar', sub: 'Día de piscina, reuniones familiares' },
-    { id: 'celebracion', img: 'assets/ico/cumpleanos.webp', icono: '🥂', titulo: 'Celebración', sub: 'Cumpleaños, bautizos, aniversarios' },
-    { id: 'curso', img: 'assets/ico/bus.webp', icono: '🎒', titulo: 'Paseo de curso', sub: 'Colegios y jardines' },
-    { id: 'privado', img: 'assets/ico/empresa.webp', icono: '💼', titulo: 'Evento privado', sub: 'Empresas, instituciones' },
-    { id: 'otro', img: 'assets/ico/estrella.webp', icono: '💬', titulo: 'Otro', sub: 'Consultas especiales' }
+    { id: 'familiar', ico: 'm-users', tone: 'pink', img: 'assets/ico/familia.webp', svg: 'i-users', color: '#ff1493', titulo: 'Uso familiar', sub: 'Día de piscina, reuniones familiares' },
+    { id: 'celebracion', ico: 'm-cake', tone: 'lav', img: 'assets/ico/cumpleanos.webp', icono: '🥂', titulo: 'Celebración', sub: 'Cumpleaños, bautizos, aniversarios' },
+    { id: 'curso', ico: 'm-bus', tone: 'yellow', img: 'assets/ico/bus.webp', icono: '🎒', titulo: 'Paseo de curso', sub: 'Colegios y jardines' },
+    { id: 'privado', ico: 'm-case', tone: 'teal', img: 'assets/ico/empresa.webp', icono: '💼', titulo: 'Evento privado', sub: 'Empresas, instituciones' },
+    { id: 'otro', ico: 'm-star', tone: 'sky', img: 'assets/ico/estrella.webp', icono: '💬', titulo: 'Otro', sub: 'Consultas especiales' }
   ],
 
   /* Carrusel de la pantalla de inicio */
@@ -102,10 +102,12 @@ window.QUINCHO_DATA = {
     tipos: ['Día de piscina en familia', 'Paseo de curso', 'Cumpleaños', 'Bautizo', 'Matrimonio', 'Graduación 4° medio', 'Gala', 'Conmemoración', 'Celebración familiar', 'Evento de empresa', 'Otro evento'],
     servicios: ['Gastronomía', 'Montaje y mantelería', 'Animación', 'DJ y música', 'Personajes / shows', 'Glitter Room', 'Decoración', 'Fotografía'],
     destacados: [
-      { icono: '🎂', img: 'assets/ico/cumpleanos.webp', titulo: 'Cumpleaños', texto: 'Piscina, inflables, almuerzo y juegos para festejar en grande.', foto: 'assets/cumple-almuerzo.jpg' },
-      { icono: '💍', img: 'assets/ico/matrimonio.webp', titulo: 'Matrimonios', texto: 'Ceremonias al aire libre con arco floral junto a la piscina.', foto: 'assets/matrimonio-entrada.jpg' },
-      { icono: '🎓', img: 'assets/ico/graduacion.webp', titulo: 'Graduaciones y galas', texto: 'Fiestas nocturnas con luces, DJ y pista al aire libre.', foto: 'assets/graduacion-baile.jpg' },
-      { icono: '🏢', img: 'assets/ico/empresa.webp', titulo: 'Empresas y grupos', texto: 'Paseos de fin de año con salón, asado y piscina.', foto: 'assets/salon-montaje.jpg' }
+      { ico: 'm-cake', tone: 'pink', titulo: 'Cumpleaños', texto: 'Piscina, inflables y almuerzo para festejar en grande.', foto: 'assets/cumple-almuerzo.jpg', tipo: 'Cumpleaños', act: 'celebracion' },
+      { ico: 'm-rings', tone: 'peach', titulo: 'Matrimonios', texto: 'Ceremonias al aire libre junto a la piscina.', foto: 'assets/matrimonio-entrada.jpg', tipo: 'Matrimonio', act: 'celebracion' },
+      { ico: 'm-cap', tone: 'lav', titulo: 'Graduaciones', texto: 'Fiestas nocturnas con luces, DJ y pista.', foto: 'assets/graduacion-baile.jpg', tipo: 'Graduación 4° medio', act: 'celebracion' },
+      { ico: 'm-bus', tone: 'yellow', titulo: 'Paseos de curso', texto: 'Un día completo de piscina y juegos para el curso.', foto: 'assets/juegos-piscina.jpg', tipo: 'Paseo de curso', act: 'curso' },
+      { ico: 'm-case', tone: 'teal', titulo: 'Eventos privados', texto: 'Empresas e instituciones con salón y asado.', foto: 'assets/salon-montaje.jpg', tipo: 'Evento de empresa', act: 'privado' },
+      { ico: 'm-sparkle', tone: 'sky', titulo: 'Otras celebraciones', texto: 'Bautizos, aniversarios y lo que quieras celebrar.', foto: 'assets/evento-noche.jpg', tipo: 'Otro evento', act: 'otro' }
     ]
   },
 
