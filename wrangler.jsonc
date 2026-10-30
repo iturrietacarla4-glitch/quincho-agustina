@@ -1,0 +1,9 @@
+{
+  // Publicación del sitio estático de El Quincho de Agustina en Cloudflare (Workers con assets estáticos)
+  "name": "quincho-agustina",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application"
+  }
+}
