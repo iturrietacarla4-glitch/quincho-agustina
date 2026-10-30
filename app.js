@@ -238,7 +238,7 @@ $('bookingForm').addEventListener('submit', e => {
   if (!selected) { toast('Primero elige una fecha habilitada en el calendario.'); $('calendar').scrollIntoView({behavior:'smooth',block:'center'}); return; }
   if (!check([['bname',req],['bphone',validPhone],['bpeople',num(1,500)]])) { toast('Revisa los campos marcados.'); return; }
   const r = {id:Date.now(), kind:'Reserva', date:selected, name:$('bname').value.trim(), phone:$('bphone').value.trim(), count:$('bpeople').value, detail:$('bookingMode').value, note:$('bnote').value.trim(), status:'Pendiente'};
-  const msg = `Hola Carla, quisiera solicitar una reserva en ${D.negocio.nombre}.\n\nFecha: ${fmtDate(r.date)}\nModalidad: ${r.detail}\nAsistentes: ${r.count}${EX.mostrarPrecios ? `\nValor referencial: ${priceText(r.count)}` : ''}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nComentarios: ${r.note || 'Sin comentarios'}\n\n¿Me confirmas disponibilidad, valor y datos para el abono del 50%?`;
+  const msg = `Hola Carla, quisiera solicitar una reserva en ${D.negocio.nombre}.\n\nFecha: ${fmtDate(r.date)}\nModalidad: ${r.detail}\nAsistentes: ${r.count}${EX.mostrarPrecios ? `\nValor referencial: ${priceText(r.count)}` : ''}\nNombre: ${r.name}\nWhatsApp: ${r.phone}\nComentarios: ${r.note || 'Sin comentarios'}\n\n¿Me confirmas disponibilidad, valor y abono?`;
   db.requests.push(r); save(); renderAdmin();
   sendWhatsApp('Solicitud de reserva lista', msg);
 });

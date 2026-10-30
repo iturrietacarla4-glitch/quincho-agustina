@@ -117,6 +117,6 @@ window.QUINCHO_DATA = {
 
   /* Condiciones de reserva. Agregar más líneas aquí (cancelación, alcohol, mascotas, piscina…) */
   politicas: [
-    { icono: '💳', texto: 'Para reservar se requiere un abono del 50% del valor total.' }
+    { icono: '💳', texto: 'Para reservar se requiere un abono. Carla te confirma el monto por WhatsApp según tu reserva.' }
   ]
 };
