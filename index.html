@@ -12,9 +12,51 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Pacifico&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610300920">
+<link rel="stylesheet" href="style.css?v=202611011400">
 </head>
 <body>
+<!-- Intro animada (se muestra una vez por visita) -->
+<div id="intro" class="intro" hidden>
+  <video id="introVideo" muted playsinline preload="auto" aria-label="Intro animada: el logo de El Quincho de Agustina cae a la piscina"></video>
+  <div class="intro-ctrl">
+    <button type="button" id="introSound" class="intro-btn" aria-pressed="false">🔊 Sonido</button>
+    <button type="button" id="introSkip" class="intro-btn">Saltar ›</button>
+  </div>
+</div>
+<script>
+(function(){
+  var el=document.getElementById('intro');
+  try{
+    if(sessionStorage.getItem('introVisto'))return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    if(navigator.connection&&navigator.connection.saveData)return;
+  }catch(e){return}
+  var v=document.getElementById('introVideo'),done=false;
+  var vertical=innerHeight>innerWidth;
+  v.src='assets/intro/intro-'+(vertical?'9x16':'16x9')+'.mp4';
+  el.hidden=false;document.documentElement.classList.add('intro-on');
+  function close(){
+    if(done)return;done=true;
+    try{sessionStorage.setItem('introVisto','1')}catch(e){}
+    el.classList.add('intro-out');document.documentElement.classList.remove('intro-on');
+    setTimeout(function(){v.pause();v.removeAttribute('src');v.load();el.remove()},600);
+  }
+  var guard=setTimeout(close,5000); // si el video no arranca, no bloquear la página
+  v.addEventListener('playing',function(){clearTimeout(guard)},{once:true});
+  v.addEventListener('ended',close);
+  v.addEventListener('error',close);
+  document.getElementById('introSkip').onclick=close;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+  var snd=document.getElementById('introSound');
+  snd.onclick=function(){
+    v.muted=!v.muted;snd.setAttribute('aria-pressed',String(!v.muted));
+    snd.textContent=v.muted?'🔊 Sonido':'🔇 Silenciar';
+    if(!v.muted&&v.currentTime>1.6){v.currentTime=0}
+    v.play().catch(close);
+  };
+  var p=v.play();if(p&&p.catch)p.catch(close);
+})();
+</script>
 <a class="skip" href="#main">Saltar al contenido</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
