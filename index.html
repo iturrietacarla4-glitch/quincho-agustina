@@ -33,7 +33,7 @@
   }catch(e){return}
   var v=document.getElementById('introVideo'),done=false;
   var vertical=innerHeight>innerWidth;
-  v.src='assets/intro/intro-'+(vertical?'9x16':'16x9')+'.mp4';
+  v.src='assets/intro/intro-'+(vertical?'9x16':'16x9')+'.mp4?v=2';
   el.hidden=false;document.documentElement.classList.add('intro-on');
   function close(){
     if(done)return;done=true;
